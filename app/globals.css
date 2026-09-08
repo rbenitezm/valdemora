@@ -219,6 +219,11 @@ h1 { margin: 12px 0 16px; font-weight: 400; font-size: clamp(2.2rem, 5vw, 4.7rem
 .case-solved { margin-top: 20px; padding: clamp(28px, 6vw, 64px); border: 1px solid #8aa76d; background: radial-gradient(circle at top right, rgb(138 167 109 / 18%), transparent 45%), #11120f; }
 .case-solved > span { color: #a9bd91; font: .75rem/1 ui-sans-serif, system-ui, sans-serif; letter-spacing: .16em; text-transform: uppercase; }
 .case-solved h2 { font-size: clamp(2rem, 5vw, 4rem); font-weight: 400; margin: 14px 0; }
+.search-area { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border); }
+.search-area > p { color: #d8c7a6; }
+.inspection-feedback { display: block; min-height: 1.6em; margin-top: 16px; color: #b9c6a7; font: .875rem/1.6 ui-sans-serif, system-ui, sans-serif; }
+.registered-stamp { display: inline-flex; align-items: center; gap: 9px; margin-top: 18px; padding: 10px 13px; border: 1px solid #71895c; color: #cbd9bd; font: .8rem/1 ui-sans-serif, system-ui, sans-serif; text-transform: uppercase; letter-spacing: .08em; }
+.registered-stamp svg { width: 17px; }
 .final-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
 .gift-view { width: min(1180px, calc(100% - 64px)); margin: 0 auto; padding: clamp(46px, 8vh, 88px) 0 70px; }
 .gift-sealed { min-height: min(650px, calc(100svh - 230px)); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; border: 1px solid var(--border); background: radial-gradient(circle at 50% 38%, rgb(151 32 27 / 22%), transparent 28rem), #0d0e0b; padding: 36px; }

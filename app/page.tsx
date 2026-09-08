@@ -32,6 +32,7 @@ export default function Home() {
   const [saveStatus, setSaveStatus] = useState('Cargando partida…');
   const [resetOpen, setResetOpen] = useState(false);
   const [feedback, setFeedback] = useState('');
+  const [exteriorSearch, setExteriorSearch] = useState<View | null>(null);
   const [roomId, setRoomId] = useState<number>(1);
   const [witnessId, setWitnessId] = useState('daniel');
   const [accused, setAccused] = useState('');
@@ -61,7 +62,7 @@ export default function Home() {
     catch { setSaveStatus('No se pudo guardar. Puedes seguir jugando en esta sesión.'); }
   }, [game, ready]);
   /* oxlint-enable react/react-compiler */
-  const navigate = (next: View) => { setView(next); setFeedback(''); };
+  const navigate = (next: View) => { setView(next); setFeedback(''); setExteriorSearch(null); };
   const resumeView = (): View => {
     if (game.solved) return 'regalo';
     if (game.reconstruction || requiredWitnesses.every(id => game.interviews.includes(id))) return 'conclusion';
@@ -355,8 +356,19 @@ export default function Home() {
             <Button variant="outline" className="quiet-action" onClick={openMap}><ArrowLeft /> Mapa de la finca</Button>
             <div className="eyebrow exterior-heading">Recorrido exterior · {view === 'acceso' ? '02' : '03'}</div>
             <h1>{view === 'acceso' ? 'La puerta lateral' : 'El suelo de los establos'}</h1>
-            <p className="lead">{view === 'acceso' ? 'El acceso que reconociste en la fotografía está frente a ti. Examina el suelo junto a la puerta.' : 'El recorrido continúa por los establos. Examina la pieza metálica que hay en el suelo.'}</p>
-            <div className="briefing-grid"><article className="brief-card"><span>Inspección del lugar</span><h2>{view === 'acceso' ? 'Junto al umbral' : 'Un objeto metálico'}</h2><p>{view === 'acceso' ? 'Una marca de humedad destaca junto a la puerta. Su presencia no permite fechar un paso por el acceso.' : 'Hay una pieza metálica en el suelo. Antes de atribuirle el ruido de medianoche, registra dónde se encuentra.'}</p><Button className="primary-action" disabled={game.found.includes(view === 'acceso' ? 6 : 7)} onClick={() => dispatch({ type: 'discover', id: view === 'acceso' ? 6 : 7 })}>{game.found.includes(view === 'acceso' ? 6 : 7) ? <><Check /> Prueba registrada</> : <><Eye /> Examinar y registrar</>}</Button></article>
+            <p className="lead">{view === 'acceso' ? 'El acceso que reconociste en la fotografía está frente a ti. Busca una alteración relevante sin asumir todavía cuándo se produjo.' : 'El recorrido continúa por los establos. Busca un objeto que pueda guardar relación con el sonido de medianoche.'}</p>
+            <div className="briefing-grid"><article className="brief-card"><span>Inspección del lugar</span><h2>{view === 'acceso' ? 'Puerta de servicio' : 'Zona de paso'}</h2>
+              {game.found.includes(view === 'acceso' ? 6 : 7) ? <><p>Esta zona ya fue inspeccionada y la prueba permanece guardada en tu partida.</p><div className="registered-stamp"><Check /> Prueba registrada</div></> : exteriorSearch !== view ? <><p>Abre la inspección y decide qué parte del entorno merece quedar registrada.</p><Button className="primary-action" onClick={() => { setExteriorSearch(view); setFeedback('Inspección abierta. Elige un punto del entorno.'); }}><Eye /> Iniciar inspección</Button></> : <div className="search-area"><p>Selecciona un punto para examinar:</p><div className="question-list">{(view === 'acceso' ? [
+                ['La manilla y la cerradura', 'La cerradura no presenta daños visibles. No puedes deducir que la puerta fuera forzada.', false],
+                ['El marco superior', 'El marco está intacto. No encuentras nada que deba incorporarse como prueba.', false],
+                ['El umbral y el suelo', 'La humedad junto a la puerta es una observación verificable. Prueba registrada.', true],
+              ] : [
+                ['Las monturas', 'Las monturas están colocadas. No explican el objeto metálico del expediente.', false],
+                ['El montón de paja', 'No encuentras ninguna alteración relevante entre la paja.', false],
+                ['El suelo junto al paso', 'Encuentras una pieza metálica suelta. Prueba registrada.', true],
+              ]).map(([label, message, correct]) => <Button key={String(label)} variant="outline" onClick={() => { setFeedback(String(message)); if (correct) dispatch({ type: 'discover', id: view === 'acceso' ? 6 : 7 }); }}>{label}</Button>)}</div></div>}
+              <output className="inspection-feedback">{feedback}</output>
+            </article>
               <aside className="brief-card"><span>Cuaderno de campo</span>{game.found.includes(view === 'acceso' ? 6 : 7) ? <><h2>{view === 'acceso' ? clues[5].title : clues[6].title}</h2><p>Prueba {view === 'acceso' ? '06' : '07'} incorporada al expediente. Relaciónala con la fotografía y el testimonio.</p><Button onClick={() => navigate(game.found.includes(view === 'acceso' ? 7 : 6) ? 'deducciones' : view === 'acceso' ? 'establos' : 'acceso')}>{game.found.includes(view === 'acceso' ? 7 : 6) ? 'Relacionar las pruebas' : view === 'acceso' ? 'Continuar a los establos' : 'Inspeccionar la puerta'} <ArrowRight /></Button></> : <><h2>Observación pendiente</h2><p>Examina el punto de interés para incorporar la prueba al expediente.</p></>}</aside></div>
           </div>}
           {view === 'hugo' && game.deduction && <div className="map-view">
