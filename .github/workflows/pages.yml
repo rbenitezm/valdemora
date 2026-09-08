@@ -39,6 +39,10 @@ jobs:
         env:
           NEXT_PUBLIC_BASE_PATH: /${{ github.event.repository.name }}
         run: npm run build
+      - name: Colocar los recursos bajo la ruta base
+        run: |
+          cp -R "dist/client/${{ github.event.repository.name }}/." dist/client/
+          rm -rf "dist/client/${{ github.event.repository.name }}"
       - name: Empaquetar la web
         uses: actions/upload-pages-artifact@v4
         with:
