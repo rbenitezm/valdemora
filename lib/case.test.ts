@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { advance, initialState, restore, questions, requiredWitnesses, confrontationIds, type GameState } from './case.ts';
+import { advance, initialState, restore, questions, requiredWitnesses, keyWitnesses, confrontationIds, type GameState } from './case.ts';
 
 void test('key interviews gate reconstruction and the final resolution', () => {
   const completeInterior: GameState = { version: 1, found: [1, 2, 3, 4, 5, 6, 7], deduction: true, answers: ['sound', 'sight', 'photo'], testimony: true, exterior: true, interior: true, interviews: [], confrontations: [], reconstruction: false, solved: false, giftOpened: false };
@@ -93,4 +93,15 @@ void test('confrontations gate the reconstruction and old saves keep their progr
   assert.equal(state.solved, true);
   state = restore(JSON.stringify({ ...interviewed, interviews: ['daniel'], confrontations: [...confrontationIds] }));
   assert.deepEqual(state.confrontations, []);
+});
+
+void test('all nine statements are required, but old saves with the four key ones keep their progress', () => {
+  assert.equal(requiredWitnesses.length, 9);
+  const base = { version: 1, found: [1, 2, 3, 4, 5, 6, 7], deduction: true, answers: ['sound', 'sight', 'photo'], testimony: true, exterior: true, interior: true };
+  const keyOnly = restore(JSON.stringify({ ...base, interviews: [...keyWitnesses] }));
+  assert.deepEqual(advance(keyOnly, { type: 'confront', id: 'argument' }), keyOnly);
+  const legacy = restore(JSON.stringify({ ...base, interviews: [...keyWitnesses], confrontations: ['argument'] }));
+  assert.deepEqual(legacy.confrontations, ['argument']);
+  const finished = restore(JSON.stringify({ ...base, interviews: [...keyWitnesses], reconstruction: true, solved: true }));
+  assert.equal(finished.solved, true);
 });

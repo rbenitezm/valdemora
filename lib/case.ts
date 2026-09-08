@@ -76,7 +76,10 @@ export const confrontations = [
   ] },
 ] as const;
 export const confrontationIds = confrontations.map(item => item.id);
-export const requiredWitnesses = witnesses.filter(witness => witness.essential).map(witness => witness.id);
+// The four statements the original resolution relies on. Every statement must be registered before confronting Inés,
+// so the interface never reveals which ones matter.
+export const keyWitnesses = witnesses.filter(witness => witness.essential).map(witness => witness.id);
+export const requiredWitnesses = witnesses.map(witness => witness.id);
 export type GameState = { version: 1; found: number[]; deduction: boolean; answers: string[]; testimony: boolean; exterior: boolean; interior: boolean; interviews: string[]; confrontations: string[]; reconstruction: boolean; solved: boolean; giftOpened: boolean };
 export const initialState: GameState = { version: 1, found: [], deduction: false, answers: [], testimony: false, exterior: false, interior: false, interviews: [], confrontations: [], reconstruction: false, solved: false, giftOpened: false };
 export type Action = { type: 'discover'; id?: 1 | 2 | 3 | 4 | 5 | 6 | 7 } | { type: 'deduce' } | { type: 'answer'; id: string } | { type: 'testimony' } | { type: 'exterior' } | { type: 'interior' } | { type: 'interview'; id: string } | { type: 'confront'; id: string } | { type: 'reconstruct' } | { type: 'solve' } | { type: 'gift' };
@@ -113,7 +116,9 @@ export function restore(raw: string | null): GameState {
     found.sort((a, b) => a - b);
     const interior = exterior && found.length === 7 && value.interior === true;
     const interviews = interior && Array.isArray(value.interviews) ? witnesses.filter(witness => value.interviews.includes(witness.id)).map(witness => witness.id) : [];
-    const interviewed = interior && requiredWitnesses.every(id => interviews.includes(id));
+    // Saves made when only the four key statements were required keep their confrontation progress.
+    const legacyProgress = value.reconstruction === true || (Array.isArray(value.confrontations) && value.confrontations.length > 0);
+    const interviewed = interior && (requiredWitnesses.every(id => interviews.includes(id)) || (legacyProgress && keyWitnesses.every(id => interviews.includes(id))));
     // Saves from before the confrontation phase keep a finished reconstruction: treat them as fully confronted.
     const confronted: string[] = !interviewed ? [] : Array.isArray(value.confrontations) ? confrontationIds.filter(id => value.confrontations.includes(id)) : value.reconstruction === true ? [...confrontationIds] : [];
     const reconstruction = interviewed && confronted.length === confrontationIds.length && value.reconstruction === true;

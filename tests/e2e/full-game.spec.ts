@@ -44,7 +44,7 @@ test('a new player can solve the complete case and open the gift', async ({ page
   await page.getByRole('button', { name: /hora del reloj cae dentro del apagón/i }).click();
   await page.getByRole('button', { name: /Personas del caso/i }).click();
 
-  for (const witness of ['Daniel González', 'Karalee Rhuman', 'María Gómez', 'Inés Robles']) {
+  for (const witness of ['Daniel González', 'Karalee Rhuman', 'María Gómez', 'Inés Robles', 'Verónica Benítez', 'Javier López', 'María Alejandra', 'Jhonatan Vaca', 'Jairo Varela']) {
     await page.getByRole('button', { name: new RegExp(witness) }).click();
     await page.getByRole('button', { name: 'Registrar declaración', exact: true }).click();
   }
