@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { advance, initialState, restore, clues, timeline, questions, rooms, witnesses, requiredWitnesses, confrontations, type Action } from '@/lib/case';
+import { advance, initialState, restore, clues, timeline, questions, rooms, witnesses, requiredWitnesses, confrontations, cast, type Action } from '@/lib/case';
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import Image from 'next/image';
@@ -45,7 +45,10 @@ const portraits: Record<string, string> = {
   daniel: '/assets/retratos/daniel.jpg', karalee: '/assets/retratos/karalee.jpg', maria: '/assets/retratos/maria.jpg', ines: '/assets/retratos/ines.jpg',
   veronica: '/assets/retratos/veronica.jpg', javier: '/assets/retratos/javier.jpg', alejandra: '/assets/retratos/alejandra.jpg', jhonatan: '/assets/retratos/jhonatan.jpg',
   jairo: '/assets/retratos/jairo.jpg', hugo: '/assets/retratos/hugo.jpg', samuel: '/assets/retratos/samuel.jpg', inspector: '/assets/retratos/inspector.jpg',
+  laura: '/assets/retratos/laura.jpg', jorge: '/assets/retratos/jorge.jpg', daniela: '/assets/retratos/daniela.jpg', eva: '/assets/retratos/eva.jpg', alba: '/assets/retratos/alba.jpg',
+  django: '/assets/retratos/django.jpg', ginger: '/assets/retratos/ginger.jpg', uno: '/assets/retratos/uno.jpg', dos: '/assets/retratos/dos.jpg',
 };
+const castGroups = [...new Set(cast.map(item => item.group))];
 // `decorative` portraits sit next to text that already names the person, so they add nothing to the accessible name.
 function Portrait({ id, name, size = 'small', decorative = false }: { id: string; name: string; size?: 'small' | 'large'; decorative?: boolean }) {
   const src = portraits[id];
@@ -452,8 +455,13 @@ export default function Home() {
           {view === 'personas' && game.interior && <div className="map-view">
             <div className="eyebrow">Fase 04 · Testimonios</div><h1>Todos ocultan algo</h1><p className="lead">Un secreto puede explicar una mentira sin convertirla en asesinato. Registra las declaraciones y decide por ti mismo cuáles afectan a la noche del apagón.</p>
             <div className="interview-layout"><div className="witness-list" aria-label="Personas disponibles">{witnesses.map(item => <button key={item.id} className={item.id === witness.id ? 'active' : ''} onClick={() => setWitnessId(item.id)}><span className="portrait-cell"><Portrait id={item.id} name={item.name} decorative />{game.interviews.includes(item.id) && <i className="portrait-check" aria-hidden="true">✓</i>}</span><div><strong>{item.name}</strong><small>{game.interviews.includes(item.id) ? 'Declaración registrada' : 'Pendiente'}</small></div></button>)}</div>
-              <article className="brief-card witness-card"><Portrait id={witness.id} name={witness.name} size="large" /><span>Entrevista · {witness.name}</span><h2>{witness.profile}</h2><p>Pregunta por aquello que no contó al comenzar la investigación.</p>{game.interviews.includes(witness.id) ? <><h3>{witness.secret}</h3><blockquote className="testimony">«{witness.statement}»</blockquote><small>Declaración adaptada a partir de la ficha original.</small></> : <Button className="primary-action" onClick={() => { play('tap'); dispatch({ type: 'interview', id: witness.id }); }}>Registrar declaración</Button>}</article>
+              <article className="brief-card witness-card"><Portrait id={witness.id} name={witness.name} size="large" /><span>Entrevista · {witness.name}</span><h2>{witness.profile}</h2><p>Pregunta por aquello que no contó al comenzar la investigación.</p>{game.interviews.includes(witness.id) ? <><h3>Secreto: {witness.secret}</h3><blockquote className="testimony">«{witness.statement}»</blockquote><small>Declaración adaptada a partir de la ficha original.</small></> : <><p className="secret-pending">Secreto: todavía no lo ha contado.</p><Button className="primary-action" onClick={() => { play('tap'); dispatch({ type: 'interview', id: witness.id }); }}>Registrar declaración</Button></>}</article>
             </div>
+            <details className="cast-details">
+              <summary>Ficha completa del caso: investigadores, niños, víctima, inspector y animales</summary>
+              {castGroups.map(group => <div key={group}><p className="cast-group">{group}</p><div className="cast-grid">{cast.filter(item => item.group === group).map(item => <div className="cast-card" key={item.id}><Portrait id={item.id} name={item.name} decorative /><div><strong>{item.name}</strong><small>{item.profile}</small>{item.tag && <em>{item.tag}</em>}</div></div>)}</div></div>)}
+              <p className="cast-source">Textos transcritos de la ficha gráfica original.</p>
+            </details>
             <article className="brief-card interview-progress"><span>Declaraciones registradas</span><h2>{game.interviews.length} / {witnesses.length}</h2>{interviewsDone ? <><p>Inés es la única que niega lo que otros afirman. Confróntala con el expediente antes de ordenar los hechos.</p><Button onClick={() => navigate('confrontacion')}>{confronted ? 'Revisar la confrontación' : 'Confrontar a Inés'} <ArrowRight /></Button></> : <p>Escucha a todas las personas del caso. No todas las mentiras tienen que ver con la muerte de Samuel.</p>}</article>
           </div>}
           {view === 'confrontacion' && interviewsDone && <div className="map-view">

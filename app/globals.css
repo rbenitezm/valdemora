@@ -336,3 +336,20 @@ h1 { margin: 12px 0 16px; font-weight: 400; font-size: clamp(2.2rem, 5vw, 4.7rem
 .witness-banner strong { display: block; font-size: 1.2rem; font-weight: 400; }
 .witness-banner small { color: var(--muted-foreground); font: .85rem/1.5 ui-sans-serif, system-ui, sans-serif; }
 @media (max-width: 620px) { .portrait.large { width: 84px; } }
+
+/* Full character sheet transcribed under the interviews. */
+.secret-pending { margin-top: 26px; color: var(--muted-foreground); font-style: italic; }
+.cast-details { margin-top: 26px; border: 1px solid var(--border); background: rgb(14 15 12 / 80%); }
+.cast-details summary { cursor: pointer; padding: 16px 18px; color: #d8c7a6; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.cast-details summary::-webkit-details-marker { display: none; }
+.cast-details summary::after { content: '+'; color: #c49a57; font-size: 1.3rem; line-height: 1; }
+.cast-details[open] summary { border-bottom: 1px solid var(--border); }
+.cast-details[open] summary::after { content: '−'; }
+.cast-group { margin: 18px 18px 10px; color: #766d5d; font: 600 .65rem/1.2 ui-sans-serif, system-ui, sans-serif; letter-spacing: .16em; text-transform: uppercase; }
+.cast-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; padding: 0 18px; }
+.cast-card { display: grid; grid-template-columns: 64px 1fr; gap: 12px; align-items: start; padding: 12px; border: 1px solid var(--border); background: rgb(9 10 8 / 60%); }
+.cast-card .portrait { width: 64px; }
+.cast-card strong { display: block; font-weight: 400; }
+.cast-card small { display: block; margin-top: 4px; color: var(--muted-foreground); font: .8rem/1.5 ui-sans-serif, system-ui, sans-serif; }
+.cast-card em { display: block; margin-top: 6px; color: #d6b779; font: italic .75rem/1.4 ui-sans-serif, system-ui, sans-serif; }
+.cast-source { margin: 16px 18px 18px; color: #766d5d; font: .72rem/1.5 ui-sans-serif, system-ui, sans-serif; }
