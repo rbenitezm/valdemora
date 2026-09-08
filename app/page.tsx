@@ -19,14 +19,7 @@ import {
 
 import { Button } from '@/components/ui/button';
 
-type View = 'intro' | 'finca' | 'bosque' | 'deducciones' | 'hugo' | 'cronologia';
-
-const locations = [
-  { name: 'Bosque norte', detail: 'Primer recorrido disponible', active: true },
-  { name: 'Casa principal', detail: 'Pendiente de inspección', active: false },
-  { name: 'Acceso lateral', detail: 'Pendiente de inspección', active: false },
-  { name: 'Establos', detail: 'Pendiente de inspección', active: false },
-];
+type View = 'intro' | 'finca' | 'bosque' | 'deducciones' | 'hugo' | 'cronologia' | 'acceso' | 'establos';
 
 export default function Home() {
   const [view, setView] = useState<View>('intro');
@@ -36,6 +29,13 @@ export default function Home() {
   const [resetOpen, setResetOpen] = useState(false);
   const [feedback, setFeedback] = useState('');
   const observationFound = game.found.includes(4);
+  const progress = Math.round(game.found.length / 7 * 100);
+  const locations: { name: string; detail: string; active: boolean; view: View }[] = [
+    { name: 'Bosque norte', detail: observationFound ? 'Fotografía registrada' : 'Inspeccionar el sendero', active: true, view: 'bosque' },
+    { name: 'Casa principal', detail: 'Próxima parte de la investigación', active: false, view: 'finca' },
+    { name: 'Acceso lateral', detail: game.found.includes(6) ? 'Humedad registrada' : game.testimony ? 'Inspeccionar la puerta' : 'Registra el testimonio de Hugo', active: game.testimony, view: 'acceso' },
+    { name: 'Establos', detail: game.found.includes(7) ? 'Pieza metálica registrada' : game.testimony ? 'Inspeccionar el suelo' : 'Registra el testimonio de Hugo', active: game.testimony, view: 'establos' },
+  ];
   const dispatch = (action: Action) => setGame(current => advance(current, action));
   // Storage is browser-only: restore after hydration before enabling game actions.
   /* oxlint-disable react/react-compiler */
@@ -70,7 +70,7 @@ export default function Home() {
         <div className="case-status" aria-live="polite">
           <span className="status-dot" />
           Investigación abierta
-          <b>{observationFound ? '1' : '0'} / 7 pruebas</b>
+          <b>{game.found.length} / 7 pruebas</b>
         </div>
       </header>
 
@@ -81,7 +81,7 @@ export default function Home() {
             <FileText aria-hidden="true" />
             El caso
           </button>
-          <button aria-label="La finca" className={['finca', 'bosque'].includes(view) ? 'active' : ''} onClick={openMap}>
+          <button aria-label="La finca" className={['finca', 'bosque', 'acceso', 'establos'].includes(view) ? 'active' : ''} onClick={openMap}>
             <Map aria-hidden="true" />
             La finca
           </button>
@@ -100,10 +100,10 @@ export default function Home() {
           <div className="case-progress">
             <div>
               <span>Progreso del caso</span>
-              <strong>{observationFound ? '14' : '0'}%</strong>
+              <strong>{progress}%</strong>
             </div>
             <div className="progress-track">
-              <i style={{ width: observationFound ? '14%' : '0%' }} />
+              <i style={{ width: `${progress}%` }} />
             </div>
             <small>La verdad aparece al conectar pruebas, testimonios y horarios.</small>
           </div>
@@ -160,7 +160,7 @@ export default function Home() {
                 <div>
                   <div className="eyebrow">Recorrido exterior</div>
                   <h1>Mapa de la finca</h1>
-                  <p>Selecciona una zona para inspeccionarla. El bosque norte es el primer recorrido disponible.</p>
+                  <p>{game.testimony ? 'El testimonio de Hugo abre la investigación del acceso lateral y los establos.' : 'Selecciona una zona para inspeccionarla. Empieza por el bosque norte.'}</p>
                 </div>
                 <Button variant="outline" className="quiet-action" onClick={() => setView('intro')}>
                   <ArrowLeft aria-hidden="true" /> Volver al expediente
@@ -188,7 +188,7 @@ export default function Home() {
                     <button
                       key={location.name}
                       disabled={!location.active}
-                      onClick={() => setView('bosque')}
+                      onClick={() => navigate(location.view)}
                     >
                       <span className="location-index">0{index + 1}</span>
                       <span>
@@ -261,6 +261,10 @@ export default function Home() {
           )}
           {view === 'deducciones' && <div className="map-view">
             <div className="eyebrow">Mesa de investigación</div><h1>Pruebas y deducciones</h1>
+            {game.testimony && <article className="brief-card deduction-card"><span>Recorrido exterior · Deducción 02</span><h2>Una puerta, una pieza, un sonido</h2>
+              <div className="question-list">{clues.filter(c => c.id === 6 || c.id === 7).map(c => <div key={c.id}><strong>{game.found.includes(c.id) ? c.title : 'Prueba pendiente de inspección'}</strong><p>{c.location}</p></div>)}</div>
+              {game.exterior ? <div className="completion"><h3>Hipótesis del recorrido registrada</h3><p>La humedad, la pieza metálica y el testimonio justifican investigar un posible recorrido exterior. No identifican a una persona ni fijan la hora de paso.</p><p>Has completado esta parte con 3 de las 7 pruebas. La investigación del interior de la casa es la siguiente parte, todavía pendiente.</p><Button onClick={() => navigate('cronologia')}>Revisar los horarios</Button></div> : [6, 7].every(id => game.found.includes(id)) ? <div className="question-list"><p>Hugo oyó un ruido metálico a las 00:00. ¿Qué relación puedes establecer?</p><Button variant="outline" onClick={() => setFeedback('No sabemos si esta pieza produjo el ruido. Coincidir en el material no demuestra el origen del sonido.')}>La pieza produjo con certeza el ruido de medianoche.</Button><Button variant="outline" onClick={() => { dispatch({ type: 'exterior' }); setFeedback('Hipótesis registrada. Quedan por comprobar la hora y la persona.'); }}>Las pruebas son compatibles con un recorrido exterior que debemos contrastar.</Button><Button variant="outline" onClick={() => setFeedback('La humedad no permite determinar quién pasó ni a qué hora. Falta evidencia para acusar.')}>La humedad identifica al responsable de la muerte.</Button></div> : <><p>Necesitas registrar la humedad de la puerta y la pieza de los establos antes de relacionarlas.</p><Button onClick={openMap}>Volver a las zonas de inspección</Button></>}
+            </article>}
             {!observationFound ? <article className="brief-card"><h2>Aún no has registrado pruebas</h2><p>Explora el bosque y examina la fotografía antigua.</p><Button onClick={() => navigate('bosque')}>Ir al bosque</Button></article> : <>
               <div className="briefing-grid"><article className="brief-card"><span>Prueba 04 · Bosque</span><h2>{clues[3].title}</h2><p>En la fotografía aparece una puerta lateral de la casa.</p></article><article className="brief-card"><span>Observación del lugar</span><h2>Un acceso visible desde el bosque</h2><p>La disposición del edificio permite relacionar la fotografía con esa puerta.</p></article></div>
               <article className="brief-card deduction-card"><h2>¿Qué puedes concluir con lo que sabes?</h2>
@@ -273,11 +277,19 @@ export default function Home() {
               </article>
             </>}
           </div>}
+          {(view === 'acceso' || view === 'establos') && game.testimony && <div className="map-view">
+            <Button variant="outline" className="quiet-action" onClick={openMap}><ArrowLeft /> Mapa de la finca</Button>
+            <div className="eyebrow exterior-heading">Recorrido exterior · {view === 'acceso' ? '02' : '03'}</div>
+            <h1>{view === 'acceso' ? 'La puerta lateral' : 'El suelo de los establos'}</h1>
+            <p className="lead">{view === 'acceso' ? 'El acceso que reconociste en la fotografía está frente a ti. Examina el suelo junto a la puerta.' : 'El recorrido continúa por los establos. Examina la pieza metálica que hay en el suelo.'}</p>
+            <div className="briefing-grid"><article className="brief-card"><span>Inspección del lugar</span><h2>{view === 'acceso' ? 'Junto al umbral' : 'Un objeto metálico'}</h2><p>{view === 'acceso' ? 'Una marca de humedad destaca junto a la puerta. Su presencia no permite fechar un paso por el acceso.' : 'Hay una pieza metálica en el suelo. Antes de atribuirle el ruido de medianoche, registra dónde se encuentra.'}</p><Button className="primary-action" disabled={game.found.includes(view === 'acceso' ? 6 : 7)} onClick={() => dispatch({ type: 'discover', id: view === 'acceso' ? 6 : 7 })}>{game.found.includes(view === 'acceso' ? 6 : 7) ? <><Check /> Prueba registrada</> : <><Eye /> Examinar y registrar</>}</Button></article>
+              <aside className="brief-card"><span>Cuaderno de campo</span>{game.found.includes(view === 'acceso' ? 6 : 7) ? <><h2>{view === 'acceso' ? clues[5].title : clues[6].title}</h2><p>Prueba {view === 'acceso' ? '06' : '07'} incorporada al expediente. Relaciónala con la fotografía y el testimonio.</p><Button onClick={() => navigate(game.found.includes(view === 'acceso' ? 7 : 6) ? 'deducciones' : view === 'acceso' ? 'establos' : 'acceso')}>{game.found.includes(view === 'acceso' ? 7 : 6) ? 'Relacionar las pruebas' : view === 'acceso' ? 'Continuar a los establos' : 'Inspeccionar la puerta'} <ArrowRight /></Button></> : <><h2>Observación pendiente</h2><p>Examina el punto de interés para incorporar la prueba al expediente.</p></>}</aside></div>
+          </div>}
           {view === 'hugo' && game.deduction && <div className="map-view">
             <div className="eyebrow">Testimonio 01 · El apagón</div><h1>Lo que escuchó Hugo</h1><p className="lead">Separa lo que oyó de lo que pudo ver. Una posibilidad todavía no es una prueba.</p>
             <div className="question-list">{questions.map(q => <article className="brief-card" key={q.id}><Button variant="outline" onClick={() => dispatch({ type: 'answer', id: q.id })}>{game.answers.includes(q.id) && <Check />}{q.question}</Button>{game.answers.includes(q.id) && <blockquote className="testimony">«{q.answer}»</blockquote>}</article>)}</div>
             {game.answers.length === questions.length && <article className="brief-card deduction-card"><h2>Un ruido, ninguna identificación</h2><p>Hugo sitúa el sonido metálico a las 00:00, durante el apagón. Su declaración no identifica a nadie ni demuestra que se abriera la puerta.</p><Button disabled={game.testimony} onClick={() => dispatch({ type: 'testimony' })}>{game.testimony ? 'Testimonio registrado' : 'Registrar testimonio'}</Button></article>}
-            {game.testimony && <article className="brief-card completion"><span>Primer recorrido completado</span><h2>La siguiente pregunta está en la puerta</h2><p>Has encontrado una prueba, formulado una deducción y contrastado un testimonio. El acceso lateral será el siguiente lugar que inspeccionar. Esta primera parte termina aquí.</p><Button onClick={() => navigate('cronologia')}>Revisar la cronología</Button></article>}
+            {game.testimony && <article className="brief-card completion"><span>Primer recorrido completado</span><h2>La siguiente pregunta está en la puerta</h2><p>El acceso lateral y los establos están disponibles. Contrasta las pruebas del exterior con el ruido que escuchó Hugo.</p><Button onClick={() => navigate('acceso')}>Inspeccionar el acceso lateral <ArrowRight /></Button></article>}
           </div>}
           {view === 'cronologia' && <div className="map-view"><div className="eyebrow">Registro de la noche</div><h1>Los minutos del apagón</h1><p className="lead">Horarios recogidos en el expediente inicial. Los testimonios ayudarán a interpretarlos.</p><ol className="timeline-list">{timeline.map(([time, event]) => <li key={time}><time>{time}</time><div>{event}{time === '00:00' && game.testimony && <small>Declaración de Hugo registrada · no identifica al responsable.</small>}</div></li>)}</ol></div>}
           </>}

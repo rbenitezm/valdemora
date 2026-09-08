@@ -22,3 +22,21 @@ void test('damaged and inconsistent saves cannot bypass progression', () => {
   assert.deepEqual(restore(JSON.stringify({version:1, found:[], deduction:true, answers:['sound','sight','photo'], testimony:true})), initialState);
   assert.equal(restore(JSON.stringify({version:1, found:[4], deduction:true, answers:['sound','unknown'], testimony:true})).testimony, false);
 });
+
+void test('exterior requires testimony and both clues, preserves old saves and revisits', () => {
+  assert.deepEqual(advance(initialState, { type: 'discover', id: 6 }), initialState);
+  assert.equal(advance(initialState, { type: 'exterior' }).exterior, false);
+  let state = restore(JSON.stringify({ version: 1, found: [4], deduction: true, answers: ['sound', 'sight', 'photo'], testimony: true }));
+  assert.equal(state.testimony, true);
+  assert.equal(state.exterior, false);
+  state = advance(state, { type: 'discover', id: 7 });
+  assert.equal(advance(state, { type: 'exterior' }).exterior, false);
+  state = advance(state, { type: 'discover', id: 6 });
+  state = advance(state, { type: 'discover' });
+  state = advance(state, { type: 'discover', id: 7 });
+  assert.deepEqual(state.found, [4, 6, 7]);
+  state = advance(state, { type: 'exterior' });
+  assert.equal(state.exterior, true);
+  assert.deepEqual(restore(JSON.stringify(state)), state);
+  assert.deepEqual(restore(JSON.stringify({ version: 1, found: [6, 7], testimony: true, exterior: true })), initialState);
+});

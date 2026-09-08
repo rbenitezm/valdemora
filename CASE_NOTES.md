@@ -16,7 +16,9 @@ Las tres respuestas de Hugo y la pregunta de deducción son texto nuevo. Se limi
 
 ## Alcance jugable
 
-Introducción → mapa → fotografía del bosque → deducción → tres preguntas a Hugo → registrar testimonio → revisar cronología. Las otras seis pruebas y la acusación están pendientes de implementación. El final del recorrido lo indica explícitamente.
+Introducción → mapa → fotografía del bosque → deducción → tres preguntas a Hugo → registrar testimonio → acceso lateral y establos → humedad y pieza metálica → hipótesis del recorrido exterior. Tres de las siete pruebas están disponibles; las cuatro del interior y la acusación siguen pendientes. El final del recorrido lo indica explícitamente.
+
+La segunda deducción es una adaptación: trata el recorrido exterior como hipótesis compatible con las pruebas. No inventa un encaje físico de la pieza en la puerta, una hora para la humedad ni una identificación. Las partidas anteriores se conservan; las zonas exteriores requieren el testimonio registrado y la segunda deducción exige ambas nuevas pruebas.
 
 Guardado local bajo `valdemora-rebuild-v1`, con validación y recuperación de datos dañados. No migra la clave del prototipo original. Reiniciar requiere confirmación. No se incluye IA en el juego.
 

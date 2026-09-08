@@ -20,11 +20,16 @@ export const questions = [
   { id: 'sight', question: '¿Viste a alguien utilizar la puerta lateral?', answer: 'No. Escuchar un ruido no es lo mismo que ver a alguien pasar. No puedo identificar a ninguna persona.' },
   { id: 'photo', question: 'Esta fotografía muestra otro acceso. ¿El ruido prueba que se utilizó?', answer: 'Podría estar relacionado, pero no lo sé. Tendríais que examinar la puerta y averiguar qué pudo hacer ese sonido.' },
 ] as const;
-export type GameState = { version: 1; found: number[]; deduction: boolean; answers: string[]; testimony: boolean };
-export const initialState: GameState = { version: 1, found: [], deduction: false, answers: [], testimony: false };
-export type Action = { type: 'discover' } | { type: 'deduce' } | { type: 'answer'; id: string } | { type: 'testimony' };
+export type GameState = { version: 1; found: number[]; deduction: boolean; answers: string[]; testimony: boolean; exterior: boolean };
+export const initialState: GameState = { version: 1, found: [], deduction: false, answers: [], testimony: false, exterior: false };
+export type Action = { type: 'discover'; id?: 4 | 6 | 7 } | { type: 'deduce' } | { type: 'answer'; id: string } | { type: 'testimony' } | { type: 'exterior' };
 export function advance(state: GameState, action: Action): GameState {
-  if (action.type === 'discover') return { ...state, found: [4] };
+  if (action.type === 'discover') {
+    const id = action.id ?? 4;
+    if (id !== 4 && !state.testimony) return state;
+    return { ...state, found: [...new Set([...state.found, id])].sort((a, b) => a - b) };
+  }
+  if (action.type === 'exterior' && state.testimony && [4, 6, 7].every(id => state.found.includes(id))) return { ...state, exterior: true };
   if (action.type === 'deduce' && state.found.includes(4)) return { ...state, deduction: true };
   if (action.type === 'answer' && state.deduction && questions.some(q => q.id === action.id)) return { ...state, answers: [...new Set([...state.answers, action.id])] };
   if (action.type === 'testimony' && questions.every(q => state.answers.includes(q.id))) return { ...state, testimony: true };
@@ -37,6 +42,8 @@ export function restore(raw: string | null): GameState {
     const found = Array.isArray(value.found) && value.found.includes(4) ? [4] : [];
     const deduction = found.length > 0 && value.deduction === true;
     const answers = deduction && Array.isArray(value.answers) ? questions.filter(q => value.answers.includes(q.id)).map(q => q.id) : [];
-    return { version: 1, found, deduction, answers, testimony: answers.length === questions.length && value.testimony === true };
+    const testimony = answers.length === questions.length && value.testimony === true;
+    if (testimony) for (const id of [6, 7]) if (value.found.includes(id)) found.push(id);
+    return { version: 1, found, deduction, answers, testimony, exterior: testimony && found.length === 3 && value.exterior === true };
   } catch { return initialState; }
 }

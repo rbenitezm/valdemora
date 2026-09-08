@@ -190,6 +190,8 @@ h1 { margin: 12px 0 16px; font-weight: 400; font-size: clamp(2.2rem, 5vw, 4.7rem
 .deduction-card, .completion { margin-top: 24px; }
 .testimony { margin: 22px 0 0; padding-left: 20px; border-left: 2px solid var(--primary); font-size: 1.15rem; line-height: 1.7; }
 .completion { border-color: #8aa76d; }
+.exterior-heading { margin-top: 32px; }
+.deduction-card output { display: block; margin-top: 16px; line-height: 1.6; }
 .timeline-list { padding: 0; list-style: none; }
 .timeline-list li { display: grid; grid-template-columns: 80px 1fr; padding: 20px 0; border-bottom: 1px solid var(--border); gap: 14px; line-height: 1.6; }
 .timeline-list time { color: var(--primary); }
