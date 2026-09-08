@@ -16,7 +16,9 @@ Las tres respuestas de Hugo y la pregunta de deducción son texto nuevo. Se limi
 
 ## Alcance jugable
 
-Introducción → mapa → fotografía del bosque → deducción → tres preguntas a Hugo → registrar testimonio → acceso lateral y establos → humedad y pieza metálica → hipótesis del recorrido exterior. Tres de las siete pruebas están disponibles; las cuatro del interior y la acusación siguen pendientes. El final del recorrido lo indica explícitamente.
+Introducción → mapa → fotografía del bosque → deducción → tres preguntas a Hugo → registrar testimonio → acceso lateral y establos → humedad y pieza metálica → hipótesis del recorrido exterior → cuatro estancias de la casa → siete pruebas → deducción temporal del reloj. Los testimonios de sospechosos, reconstrucción y acusación siguen pendientes. El final del recorrido lo indica explícitamente.
+
+Las descripciones de las estancias son adaptación de los nombres de pistas originales. No se inventa el contenido del documento, la cerradura de la llave ni un análisis del vaso. La deducción temporal sólo establece que las 00:06 caen dentro del apagón, no que sea la hora de la muerte. Las pruebas de la casa requieren completar el exterior; su deducción requiere las siete pruebas. El porcentaje de la interfaz representa pruebas reunidas, no un caso resuelto.
 
 La segunda deducción es una adaptación: trata el recorrido exterior como hipótesis compatible con las pruebas. No inventa un encaje físico de la pieza en la puerta, una hora para la humedad ni una identificación. Las partidas anteriores se conservan; las zonas exteriores requieren el testimonio registrado y la segunda deducción exige ambas nuevas pruebas.
 

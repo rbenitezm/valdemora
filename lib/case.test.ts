@@ -2,6 +2,24 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { advance, initialState, restore, questions } from './case.ts';
 
+void test('interior unlocks after exterior and survives reload with all seven clues', () => {
+  assert.deepEqual(advance(initialState, { type: 'discover', id: 1 }), initialState);
+  let state = restore(JSON.stringify({ version: 1, found: [4, 6, 7], deduction: true, answers: ['sound', 'sight', 'photo'], testimony: true, exterior: true }));
+  assert.equal(state.exterior, true);
+  assert.equal(state.interior, false);
+  for (const id of [1, 2, 3] as const) state = advance(state, { type: 'discover', id });
+  assert.equal(advance(state, { type: 'interior' }).interior, false);
+  state = advance(state, { type: 'discover', id: 5 });
+  state = advance(state, { type: 'interior' });
+  assert.deepEqual(state.found, [1, 2, 3, 4, 5, 6, 7]);
+  assert.equal(state.interior, true);
+  assert.deepEqual(restore(JSON.stringify(state)), state);
+  assert.deepEqual(advance(state, { type: 'discover', id: 1 }), state);
+  const invalid = restore(JSON.stringify({ ...state, exterior: false }));
+  assert.deepEqual(invalid.found, [4, 6, 7]);
+  assert.equal(invalid.interior, false);
+});
+
 void test('first investigation requires evidence, deduction and all questions', () => {
   assert.equal(advance(initialState, { type: 'deduce' }).deduction, false);
   assert.deepEqual(advance(initialState, { type: 'answer', id: 'sound' }).answers, []);

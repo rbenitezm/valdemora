@@ -191,6 +191,14 @@ h1 { margin: 12px 0 16px; font-weight: 400; font-size: clamp(2.2rem, 5vw, 4.7rem
 .testimony { margin: 22px 0 0; padding-left: 20px; border-left: 2px solid var(--primary); font-size: 1.15rem; line-height: 1.7; }
 .completion { border-color: #8aa76d; }
 .exterior-heading { margin-top: 32px; }
+.house-layout { display: grid; grid-template-columns: minmax(240px, .8fr) minmax(0, 1.2fr); gap: 24px; align-items: start; }
+.house-plan { width: 100%; max-height: 420px; object-fit: contain; margin-bottom: 20px; border: 1px solid var(--border); background: #11120f; }
+.interior-finding { margin-top: 28px; padding-top: 24px; border-top: 1px solid var(--border); }
+.evidence-register { display: grid; gap: 12px; margin: 24px 0; }
+.evidence-register > div { padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+.evidence-register span, .evidence-register strong { display: block; line-height: 1.6; }
+.evidence-register span { font-size: .875rem; color: var(--muted-foreground); }
+@media (max-width: 900px) { .house-layout { grid-template-columns: 1fr; } }
 .deduction-card output { display: block; margin-top: 16px; line-height: 1.6; }
 .timeline-list { padding: 0; list-style: none; }
 .timeline-list li { display: grid; grid-template-columns: 80px 1fr; padding: 20px 0; border-bottom: 1px solid var(--border); gap: 14px; line-height: 1.6; }

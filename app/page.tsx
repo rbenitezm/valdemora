@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { advance, initialState, restore, clues, timeline, questions, type Action } from '@/lib/case';
+import { advance, initialState, restore, clues, timeline, questions, rooms, type Action } from '@/lib/case';
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import Image from 'next/image';
 import {
@@ -19,7 +19,7 @@ import {
 
 import { Button } from '@/components/ui/button';
 
-type View = 'intro' | 'finca' | 'bosque' | 'deducciones' | 'hugo' | 'cronologia' | 'acceso' | 'establos';
+type View = 'intro' | 'finca' | 'bosque' | 'deducciones' | 'hugo' | 'cronologia' | 'acceso' | 'establos' | 'casa';
 
 export default function Home() {
   const [view, setView] = useState<View>('intro');
@@ -28,11 +28,13 @@ export default function Home() {
   const [saveStatus, setSaveStatus] = useState('Cargando partida…');
   const [resetOpen, setResetOpen] = useState(false);
   const [feedback, setFeedback] = useState('');
+  const [roomId, setRoomId] = useState<number>(1);
+  const room = rooms.find(item => item.id === roomId) ?? rooms[0];
   const observationFound = game.found.includes(4);
   const progress = Math.round(game.found.length / 7 * 100);
   const locations: { name: string; detail: string; active: boolean; view: View }[] = [
     { name: 'Bosque norte', detail: observationFound ? 'Fotografía registrada' : 'Inspeccionar el sendero', active: true, view: 'bosque' },
-    { name: 'Casa principal', detail: 'Próxima parte de la investigación', active: false, view: 'finca' },
+    { name: 'Casa principal', detail: game.exterior ? 'Cuatro estancias disponibles' : 'Completa la deducción del exterior', active: game.exterior, view: 'casa' },
     { name: 'Acceso lateral', detail: game.found.includes(6) ? 'Humedad registrada' : game.testimony ? 'Inspeccionar la puerta' : 'Registra el testimonio de Hugo', active: game.testimony, view: 'acceso' },
     { name: 'Establos', detail: game.found.includes(7) ? 'Pieza metálica registrada' : game.testimony ? 'Inspeccionar el suelo' : 'Registra el testimonio de Hugo', active: game.testimony, view: 'establos' },
   ];
@@ -81,7 +83,7 @@ export default function Home() {
             <FileText aria-hidden="true" />
             El caso
           </button>
-          <button aria-label="La finca" className={['finca', 'bosque', 'acceso', 'establos'].includes(view) ? 'active' : ''} onClick={openMap}>
+          <button aria-label="La finca" className={['finca', 'bosque', 'acceso', 'establos', 'casa'].includes(view) ? 'active' : ''} onClick={openMap}>
             <Map aria-hidden="true" />
             La finca
           </button>
@@ -99,7 +101,7 @@ export default function Home() {
 
           <div className="case-progress">
             <div>
-              <span>Progreso del caso</span>
+              <span>Pruebas reunidas</span>
               <strong>{progress}%</strong>
             </div>
             <div className="progress-track">
@@ -261,9 +263,14 @@ export default function Home() {
           )}
           {view === 'deducciones' && <div className="map-view">
             <div className="eyebrow">Mesa de investigación</div><h1>Pruebas y deducciones</h1>
+            {game.exterior && <article className="brief-card deduction-card"><span>Interior · Deducción 03</span><h2>Las 00:06, dentro del apagón</h2>
+              <div className="evidence-register">{clues.map(clue => <div key={clue.id}><span>{game.found.includes(clue.id) ? '✓' : '—'} {clue.location}</span><strong>{game.found.includes(clue.id) ? clue.title : 'Pendiente de inspección'}</strong></div>)}</div>
+              {game.interior ? <><h3>Relación temporal registrada</h3><p>Las 00:06 están entre el apagón de las 23:58 y el regreso de la luz a las 00:09. El reloj aporta una referencia que todavía necesita explicación.</p><p>Las siete pruebas están reunidas. La reconstrucción y los testimonios de los sospechosos serán la siguiente parte de la investigación.</p><Button onClick={() => navigate('cronologia')}>Consultar la cronología</Button></> : game.found.length === 7 ? <div className="question-list"><p>¿Qué puedes afirmar al comparar el reloj con los horarios?</p><Button variant="outline" onClick={() => setFeedback('Un reloj detenido no determina por sí solo la hora de la muerte.')}>Samuel murió exactamente a las 00:06.</Button><Button variant="outline" onClick={() => { dispatch({ type: 'interior' }); setFeedback('Relación temporal registrada. Aún falta explicar por qué se detuvo el reloj.'); }}>La hora del reloj cae dentro del apagón, pero no demuestra cuándo murió Samuel.</Button><Button variant="outline" onClick={() => setFeedback('La luz volvió a las 00:09, tres minutos después de la hora que marca el reloj.')}>El reloj se detuvo después de volver la luz.</Button></div> : <><p>Reúne las cuatro pruebas de la casa para contrastar el conjunto.</p><Button onClick={() => navigate('casa')}>Inspeccionar la casa</Button></>}
+              <output>{feedback}</output>
+            </article>}
             {game.testimony && <article className="brief-card deduction-card"><span>Recorrido exterior · Deducción 02</span><h2>Una puerta, una pieza, un sonido</h2>
               <div className="question-list">{clues.filter(c => c.id === 6 || c.id === 7).map(c => <div key={c.id}><strong>{game.found.includes(c.id) ? c.title : 'Prueba pendiente de inspección'}</strong><p>{c.location}</p></div>)}</div>
-              {game.exterior ? <div className="completion"><h3>Hipótesis del recorrido registrada</h3><p>La humedad, la pieza metálica y el testimonio justifican investigar un posible recorrido exterior. No identifican a una persona ni fijan la hora de paso.</p><p>Has completado esta parte con 3 de las 7 pruebas. La investigación del interior de la casa es la siguiente parte, todavía pendiente.</p><Button onClick={() => navigate('cronologia')}>Revisar los horarios</Button></div> : [6, 7].every(id => game.found.includes(id)) ? <div className="question-list"><p>Hugo oyó un ruido metálico a las 00:00. ¿Qué relación puedes establecer?</p><Button variant="outline" onClick={() => setFeedback('No sabemos si esta pieza produjo el ruido. Coincidir en el material no demuestra el origen del sonido.')}>La pieza produjo con certeza el ruido de medianoche.</Button><Button variant="outline" onClick={() => { dispatch({ type: 'exterior' }); setFeedback('Hipótesis registrada. Quedan por comprobar la hora y la persona.'); }}>Las pruebas son compatibles con un recorrido exterior que debemos contrastar.</Button><Button variant="outline" onClick={() => setFeedback('La humedad no permite determinar quién pasó ni a qué hora. Falta evidencia para acusar.')}>La humedad identifica al responsable de la muerte.</Button></div> : <><p>Necesitas registrar la humedad de la puerta y la pieza de los establos antes de relacionarlas.</p><Button onClick={openMap}>Volver a las zonas de inspección</Button></>}
+              {game.exterior ? <div className="completion"><h3>Hipótesis del recorrido registrada</h3><p>La humedad, la pieza metálica y el testimonio justifican investigar un posible recorrido exterior. No identifican a una persona ni fijan la hora de paso.</p><p>El interior de la casa está disponible. Busca allí las otras cuatro pruebas.</p><Button onClick={() => navigate('casa')}>Entrar en la casa</Button></div> : [6, 7].every(id => game.found.includes(id)) ? <div className="question-list"><p>Hugo oyó un ruido metálico a las 00:00. ¿Qué relación puedes establecer?</p><Button variant="outline" onClick={() => setFeedback('No sabemos si esta pieza produjo el ruido. Coincidir en el material no demuestra el origen del sonido.')}>La pieza produjo con certeza el ruido de medianoche.</Button><Button variant="outline" onClick={() => { dispatch({ type: 'exterior' }); setFeedback('Hipótesis registrada. Quedan por comprobar la hora y la persona.'); }}>Las pruebas son compatibles con un recorrido exterior que debemos contrastar.</Button><Button variant="outline" onClick={() => setFeedback('La humedad no permite determinar quién pasó ni a qué hora. Falta evidencia para acusar.')}>La humedad identifica al responsable de la muerte.</Button></div> : <><p>Necesitas registrar la humedad de la puerta y la pieza de los establos antes de relacionarlas.</p><Button onClick={openMap}>Volver a las zonas de inspección</Button></>}
             </article>}
             {!observationFound ? <article className="brief-card"><h2>Aún no has registrado pruebas</h2><p>Explora el bosque y examina la fotografía antigua.</p><Button onClick={() => navigate('bosque')}>Ir al bosque</Button></article> : <>
               <div className="briefing-grid"><article className="brief-card"><span>Prueba 04 · Bosque</span><h2>{clues[3].title}</h2><p>En la fotografía aparece una puerta lateral de la casa.</p></article><article className="brief-card"><span>Observación del lugar</span><h2>Un acceso visible desde el bosque</h2><p>La disposición del edificio permite relacionar la fotografía con esa puerta.</p></article></div>
@@ -276,6 +283,12 @@ export default function Home() {
                 <output>{feedback}</output>
               </article>
             </>}
+          </div>}
+          {view === 'casa' && game.exterior && <div className="map-view">
+            <Button variant="outline" className="quiet-action" onClick={openMap}><ArrowLeft /> Mapa de la finca</Button><div className="eyebrow exterior-heading">Recorrido interior</div><h1>Dentro de Valdemora</h1><p className="lead">Recorre las cuatro estancias y registra los objetos antes de interpretar su relación con la noche.</p>
+            <div className="house-layout"><div><Image className="house-plan" src="/assets/original/plano-casa.jpg" alt="Plano original de la casa Valdemora" width={315} height={325} /><div className="question-list" aria-label="Estancias de la casa">{rooms.map(item => <Button key={item.id} variant={item.id === room.id ? 'default' : 'outline'} aria-pressed={item.id === room.id} onClick={() => setRoomId(item.id)}>{game.found.includes(item.id) && <Check aria-hidden="true" />}{item.name}</Button>)}</div></div>
+              <article className="brief-card"><span>{room.name}</span><h2>{room.title}</h2><p>{room.description}</p><Button className="primary-action" disabled={game.found.includes(room.id)} onClick={() => dispatch({ type: 'discover', id: room.id })}>{game.found.includes(room.id) ? 'Prueba registrada' : 'Examinar y registrar'}</Button>{game.found.includes(room.id) && <div className="interior-finding"><h3>{clues.find(clue => clue.id === room.id)?.title}</h3><p>{room.caution}</p><Button variant="outline" onClick={() => { const next = rooms.find(item => !game.found.includes(item.id)); if (next) setRoomId(next.id); else navigate('deducciones'); }}>{rooms.some(item => !game.found.includes(item.id)) ? 'Ir a una estancia pendiente' : 'Relacionar las siete pruebas'} <ArrowRight /></Button></div>}</article>
+            </div>
           </div>}
           {(view === 'acceso' || view === 'establos') && game.testimony && <div className="map-view">
             <Button variant="outline" className="quiet-action" onClick={openMap}><ArrowLeft /> Mapa de la finca</Button>
