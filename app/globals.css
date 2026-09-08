@@ -202,7 +202,11 @@ h1 { margin: 12px 0 16px; font-weight: 400; font-size: clamp(2.2rem, 5vw, 4.7rem
 .evidence-register > div { padding-bottom: 12px; border-bottom: 1px solid var(--border); }
 .evidence-register span, .evidence-register strong { display: block; line-height: 1.6; }
 .evidence-register span { font-size: .875rem; color: var(--muted-foreground); }
+.evidence-board { display: grid; grid-template-columns: minmax(220px, 375px) minmax(160px, 1fr); gap: 20px; align-items: end; margin: 24px 0; padding: 16px; border: 1px solid rgb(196 154 87 / 35%); background: #0d0e0b; }
+.evidence-board img { width: 100%; height: auto; border: 1px solid rgb(232 216 183 / 18%); }
+.evidence-board figcaption { color: var(--muted-foreground); font: .75rem/1.6 ui-sans-serif, system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
 @media (max-width: 900px) { .house-layout, .interview-layout { grid-template-columns: 1fr; } }
+@media (max-width: 620px) { .evidence-board { grid-template-columns: 1fr; } }
 .deduction-card output { display: block; margin-top: 16px; line-height: 1.6; }
 .character-board { width: 100%; height: auto; max-height: 520px; object-fit: cover; object-position: top; border: 1px solid var(--border); margin-bottom: 24px; }
 .interview-layout { display: grid; grid-template-columns: minmax(230px, .65fr) minmax(0, 1.35fr); gap: 18px; align-items: start; }
