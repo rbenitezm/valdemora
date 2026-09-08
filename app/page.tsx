@@ -1,6 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { advance, initialState, restore, clues, timeline, questions, type Action } from '@/lib/case';
+import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import Image from 'next/image';
 import {
   ArrowLeft,
@@ -17,7 +19,7 @@ import {
 
 import { Button } from '@/components/ui/button';
 
-type View = 'intro' | 'finca' | 'bosque';
+type View = 'intro' | 'finca' | 'bosque' | 'deducciones' | 'hugo' | 'cronologia';
 
 const locations = [
   { name: 'Bosque norte', detail: 'Primer recorrido disponible', active: true },
@@ -28,7 +30,27 @@ const locations = [
 
 export default function Home() {
   const [view, setView] = useState<View>('intro');
-  const [observationFound, setObservationFound] = useState(false);
+  const [game, setGame] = useState(initialState);
+  const [ready, setReady] = useState(false);
+  const [saveStatus, setSaveStatus] = useState('Cargando partida…');
+  const [resetOpen, setResetOpen] = useState(false);
+  const [feedback, setFeedback] = useState('');
+  const observationFound = game.found.includes(4);
+  const dispatch = (action: Action) => setGame(current => advance(current, action));
+  // Storage is browser-only: restore after hydration before enabling game actions.
+  /* oxlint-disable react/react-compiler */
+  useEffect(() => {
+    try { setGame(restore(localStorage.getItem('valdemora-rebuild-v1'))); }
+    catch { setSaveStatus('Guardado no disponible en este navegador.'); }
+    setReady(true);
+  }, []);
+  useEffect(() => {
+    if (!ready) return;
+    try { localStorage.setItem('valdemora-rebuild-v1', JSON.stringify(game)); setSaveStatus('Partida guardada en este dispositivo'); }
+    catch { setSaveStatus('No se pudo guardar. Puedes seguir jugando en esta sesión.'); }
+  }, [game, ready]);
+  /* oxlint-enable react/react-compiler */
+  const navigate = (next: View) => { setView(next); setFeedback(''); };
 
   const openMap = () => setView('finca');
 
@@ -59,19 +81,20 @@ export default function Home() {
             <FileText aria-hidden="true" />
             El caso
           </button>
-          <button className={view !== 'intro' ? 'active' : ''} onClick={openMap}>
+          <button aria-label="La finca" className={['finca', 'bosque'].includes(view) ? 'active' : ''} onClick={openMap}>
             <Map aria-hidden="true" />
             La finca
           </button>
-          <button disabled>
+          <button aria-label="Cronología" className={view === 'cronologia' ? 'active' : ''} onClick={() => navigate('cronologia')}>
             <Clock3 aria-hidden="true" />
             Cronología
-            <span>bloqueada</span>
           </button>
-          <button disabled>
+          <button aria-label="Pruebas y deducciones" className={view === 'deducciones' ? 'active' : ''} onClick={() => navigate('deducciones')}>
             <Search aria-hidden="true" />
             Deducciones
-            <span>bloqueadas</span>
+          </button>
+          <button aria-label="Interrogar a Hugo" disabled={!game.deduction} className={view === 'hugo' ? 'active' : ''} onClick={() => navigate('hugo')}>
+            <FileText aria-hidden="true" /> Hugo
           </button>
 
           <div className="case-progress">
@@ -87,6 +110,8 @@ export default function Home() {
         </nav>
 
         <section className="case-content">
+          <div className="save-bar"><output>{saveStatus}</output><Button variant="ghost" disabled={!ready} onClick={() => setResetOpen(true)}>Reiniciar partida</Button></div>
+          {!ready ? <p className="map-view">Abriendo el expediente…</p> : <>
           {view === 'intro' && (
             <div className="intro-view">
               <div className="eyebrow">El último fin de semana</div>
@@ -117,7 +142,7 @@ export default function Home() {
                   <h2>Reconstruir los minutos del apagón</h2>
                   <p>Empieza por el exterior. Observa antes de interpretar y registra sólo lo que puedas demostrar.</p>
                   <Button className="primary-action" onClick={openMap}>
-                    Comenzar investigación <ArrowRight aria-hidden="true" />
+                    {observationFound ? 'Continuar investigación' : 'Comenzar investigación'} <ArrowRight aria-hidden="true" />
                   </Button>
                 </article>
                 <article className="brief-card note-card">
@@ -197,8 +222,8 @@ export default function Home() {
                   </div>
                   <button
                     className={`evidence-hotspot ${observationFound ? 'found' : ''}`}
-                    onClick={() => setObservationFound(true)}
-                    aria-label="Examinar el acceso lateral visible desde el bosque"
+                    onClick={() => dispatch({ type: 'discover' })}
+                    aria-label="Examinar la fotografía antigua de Valdemora"
                   >
                     {observationFound ? <Check aria-hidden="true" /> : <Eye aria-hidden="true" />}
                     <span>{observationFound ? 'Observación registrada' : 'Examinar'}</span>
@@ -216,11 +241,12 @@ export default function Home() {
 
                   {observationFound ? (
                     <div className="finding-card">
-                      <span className="finding-number">Observación 01</span>
-                      <h2>Línea de visión</h2>
-                      <p>Desde el sendero se distingue una puerta secundaria de la casa. Alguien conocía una salida que el resto del grupo apenas menciona.</p>
+                      <span className="finding-number">Prueba 04 · Fotografía</span>
+                      <h2>{clues[3].title}</h2>
+                      <p>La fotografía permite reconocer una puerta lateral. Desde el bosque puedes relacionar ese acceso con la disposición actual de la casa.</p>
                       <div className="finding-rule" />
                       <small>Esto es una observación. Todavía no demuestra quién utilizó la puerta.</small>
+                      <Button className="primary-action" onClick={() => navigate('deducciones')}>Examinar la relación <ArrowRight /></Button>
                     </div>
                   ) : (
                     <div className="empty-finding">
@@ -233,8 +259,31 @@ export default function Home() {
               </div>
             </div>
           )}
+          {view === 'deducciones' && <div className="map-view">
+            <div className="eyebrow">Mesa de investigación</div><h1>Pruebas y deducciones</h1>
+            {!observationFound ? <article className="brief-card"><h2>Aún no has registrado pruebas</h2><p>Explora el bosque y examina la fotografía antigua.</p><Button onClick={() => navigate('bosque')}>Ir al bosque</Button></article> : <>
+              <div className="briefing-grid"><article className="brief-card"><span>Prueba 04 · Bosque</span><h2>{clues[3].title}</h2><p>En la fotografía aparece una puerta lateral de la casa.</p></article><article className="brief-card"><span>Observación del lugar</span><h2>Un acceso visible desde el bosque</h2><p>La disposición del edificio permite relacionar la fotografía con esa puerta.</p></article></div>
+              <article className="brief-card deduction-card"><h2>¿Qué puedes concluir con lo que sabes?</h2>
+                {game.deduction ? <><p>Existe un acceso lateral que merece investigarse. Aún no sabes quién lo utilizó ni cuándo.</p><Button onClick={() => navigate('hugo')}>Interrogar a Hugo <ArrowRight /></Button></> : <div className="question-list">
+                  <Button variant="outline" onClick={() => setFeedback('La fotografía muestra un acceso, pero no identifica a ninguna persona.')}>La fotografía identifica al responsable.</Button>
+                  <Button variant="outline" onClick={() => { dispatch({ type: 'deduce' }); setFeedback('Deducción registrada. Puedes contrastarla con el testimonio de Hugo.'); }}>Existe otra vía de entrada o salida que debemos comprobar.</Button>
+                  <Button variant="outline" onClick={() => setFeedback('Una fotografía antigua no demuestra qué ocurrió durante el apagón.')}>La puerta se utilizó durante el apagón.</Button>
+                </div>}
+                <output>{feedback}</output>
+              </article>
+            </>}
+          </div>}
+          {view === 'hugo' && game.deduction && <div className="map-view">
+            <div className="eyebrow">Testimonio 01 · El apagón</div><h1>Lo que escuchó Hugo</h1><p className="lead">Separa lo que oyó de lo que pudo ver. Una posibilidad todavía no es una prueba.</p>
+            <div className="question-list">{questions.map(q => <article className="brief-card" key={q.id}><Button variant="outline" onClick={() => dispatch({ type: 'answer', id: q.id })}>{game.answers.includes(q.id) && <Check />}{q.question}</Button>{game.answers.includes(q.id) && <blockquote className="testimony">«{q.answer}»</blockquote>}</article>)}</div>
+            {game.answers.length === questions.length && <article className="brief-card deduction-card"><h2>Un ruido, ninguna identificación</h2><p>Hugo sitúa el sonido metálico a las 00:00, durante el apagón. Su declaración no identifica a nadie ni demuestra que se abriera la puerta.</p><Button disabled={game.testimony} onClick={() => dispatch({ type: 'testimony' })}>{game.testimony ? 'Testimonio registrado' : 'Registrar testimonio'}</Button></article>}
+            {game.testimony && <article className="brief-card completion"><span>Primer recorrido completado</span><h2>La siguiente pregunta está en la puerta</h2><p>Has encontrado una prueba, formulado una deducción y contrastado un testimonio. El acceso lateral será el siguiente lugar que inspeccionar. Esta primera parte termina aquí.</p><Button onClick={() => navigate('cronologia')}>Revisar la cronología</Button></article>}
+          </div>}
+          {view === 'cronologia' && <div className="map-view"><div className="eyebrow">Registro de la noche</div><h1>Los minutos del apagón</h1><p className="lead">Horarios recogidos en el expediente inicial. Los testimonios ayudarán a interpretarlos.</p><ol className="timeline-list">{timeline.map(([time, event]) => <li key={time}><time>{time}</time><div>{event}{time === '00:00' && game.testimony && <small>Declaración de Hugo registrada · no identifica al responsable.</small>}</div></li>)}</ol></div>}
+          </>}
         </section>
       </div>
+      <AlertDialog open={resetOpen} onOpenChange={setResetOpen}><AlertDialogContent><AlertDialogTitle>¿Reiniciar la investigación?</AlertDialogTitle><AlertDialogDescription>Se borrarán las pruebas, deducciones y respuestas de esta partida en este dispositivo.</AlertDialogDescription><AlertDialogFooter><AlertDialogCancel>Conservar partida</AlertDialogCancel><AlertDialogAction onClick={() => { setGame(initialState); navigate('intro'); setResetOpen(false); }}>Reiniciar</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog>
     </main>
   );
 }

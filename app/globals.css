@@ -183,3 +183,18 @@ h1 { margin: 12px 0 16px; font-weight: 400; font-size: clamp(2.2rem, 5vw, 4.7rem
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
+
+.save-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 24px; border-bottom: 1px solid var(--border); color: #b9af9c; font: .875rem/1.5 ui-sans-serif, system-ui, sans-serif; }
+.question-list { display: grid; gap: 14px; }
+.question-list button { white-space: normal; height: auto; min-height: 48px; padding: 14px; justify-content: flex-start; text-align: left; line-height: 1.5; }
+.deduction-card, .completion { margin-top: 24px; }
+.testimony { margin: 22px 0 0; padding-left: 20px; border-left: 2px solid var(--primary); font-size: 1.15rem; line-height: 1.7; }
+.completion { border-color: #8aa76d; }
+.timeline-list { padding: 0; list-style: none; }
+.timeline-list li { display: grid; grid-template-columns: 80px 1fr; padding: 20px 0; border-bottom: 1px solid var(--border); gap: 14px; line-height: 1.6; }
+.timeline-list time { color: var(--primary); }
+.timeline-list small { display: block; color: #b9c6a7; margin-top: 8px; font-size: .875rem; }
+.brief-card p, .empty-finding p { font-size: 1rem; }
+.case-status, .case-mark strong, .eyebrow, .panel-kicker, .finding-number, .scene-copy span, .field-title small { font-size: .75rem; }
+.primary-action, .locations-panel small, .case-progress small, .finding-card small, .evidence-hotspot span { font-size: .875rem; }
+@media (max-width: 620px) { .save-bar { padding: 8px 12px; font-size: .75rem; flex-wrap: wrap; } .case-status { font-size: 0; } .case-nav > button { flex-direction: column; gap: 3px; font-size: .75rem; } }
