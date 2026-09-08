@@ -77,6 +77,18 @@ export default function Home() {
     if (observationFound) return 'deducciones';
     return 'finca';
   };
+  const nextStepLabel = () => {
+    if (game.solved) return 'Ver regalo';
+    if (game.reconstruction || requiredWitnesses.every(id => game.interviews.includes(id))) return 'Ir a la conclusión';
+    if (game.interior) return 'Continuar testimonios';
+    if (game.found.length === 7) return 'Resolver deducción interior';
+    if (game.exterior) return 'Entrar en la casa';
+    if (game.testimony && [6, 7].every(id => game.found.includes(id))) return 'Resolver deducción exterior';
+    if (game.testimony) return 'Continuar recorrido exterior';
+    if (game.deduction) return 'Continuar interrogatorio';
+    if (observationFound) return 'Relacionar la fotografía';
+    return 'Comenzar investigación';
+  };
 
   const openMap = () => setView('finca');
 
@@ -145,7 +157,7 @@ export default function Home() {
         </nav>
 
         <section className="case-content">
-          <div className="save-bar"><output>{saveStatus}</output><Button variant="ghost" disabled={!ready} onClick={() => setResetOpen(true)}>Reiniciar partida</Button></div>
+          <div className="save-bar"><output>{saveStatus}</output><div className="save-actions"><Button className="next-step" disabled={!ready} onClick={() => navigate(resumeView())}>{nextStepLabel()} <ArrowRight /></Button><Button variant="ghost" disabled={!ready} onClick={() => setResetOpen(true)}>Reiniciar partida</Button></div></div>
           {!ready ? <p className="map-view">Abriendo el expediente…</p> : <>
           {view === 'intro' && (
             <div className="intro-view">
@@ -222,15 +234,16 @@ export default function Home() {
                   {locations.map((location, index) => (
                     <button
                       key={location.name}
-                      disabled={!location.active}
-                      onClick={() => navigate(location.view)}
+                      className={!location.active ? 'locked-location' : ''}
+                      aria-disabled={!location.active}
+                      onClick={() => navigate(location.active ? location.view : resumeView())}
                     >
                       <span className="location-index">0{index + 1}</span>
                       <span>
                         <strong>{location.name}</strong>
                         <small>{location.detail}</small>
                       </span>
-                      {location.active ? <ArrowRight aria-hidden="true" /> : <span className="lock-dot" />}
+                      {location.active ? <ArrowRight aria-hidden="true" /> : <span className="lock-dot" aria-hidden="true" />}
                     </button>
                   ))}
                 </aside>
@@ -319,7 +332,7 @@ export default function Home() {
           </div>}
           {view === 'casa' && game.exterior && <div className="map-view">
             <Button variant="outline" className="quiet-action" onClick={openMap}><ArrowLeft /> Mapa de la finca</Button><div className="eyebrow exterior-heading">Recorrido interior</div><h1>Dentro de Valdemora</h1><p className="lead">Recorre las cuatro estancias y registra los objetos antes de interpretar su relación con la noche.</p>
-            <div className="house-layout"><div><Image className="house-plan" src="/assets/original/plano-casa.jpg" alt="Plano original de la casa Valdemora" width={315} height={325} /><div className="question-list" aria-label="Estancias de la casa">{rooms.map(item => <Button key={item.id} variant={item.id === room.id ? 'default' : 'outline'} aria-pressed={item.id === room.id} onClick={() => setRoomId(item.id)}>{game.found.includes(item.id) && <Check aria-hidden="true" />}{item.name}</Button>)}</div></div>
+            <div className="house-layout"><div><Image className="house-plan" src="/assets/original/plano-casa.jpg" alt="Plano original de la casa Valdemora" width={315} height={325} /><div className="question-list" aria-label="Entradas a las estancias de la casa">{rooms.map(item => <Button key={item.id} variant={item.id === room.id ? 'default' : 'outline'} aria-label={`Entrar en ${item.name}`} aria-pressed={item.id === room.id} onClick={() => setRoomId(item.id)}>{game.found.includes(item.id) && <Check aria-hidden="true" />}Entrar: {item.name}</Button>)}</div></div>
               <article className="brief-card"><span>{room.name}</span><h2>{room.title}</h2><p>{room.description}</p><Button className="primary-action" disabled={game.found.includes(room.id)} onClick={() => dispatch({ type: 'discover', id: room.id })}>{game.found.includes(room.id) ? 'Prueba registrada' : 'Examinar y registrar'}</Button>{game.found.includes(room.id) && <div className="interior-finding"><h3>{clues.find(clue => clue.id === room.id)?.title}</h3><p>{room.caution}</p><Button variant="outline" onClick={() => { const next = rooms.find(item => !game.found.includes(item.id)); if (next) setRoomId(next.id); else navigate('deducciones'); }}>{rooms.some(item => !game.found.includes(item.id)) ? 'Ir a una estancia pendiente' : 'Relacionar las siete pruebas'} <ArrowRight /></Button></div>}</article>
             </div>
           </div>}

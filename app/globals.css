@@ -184,7 +184,11 @@ h1 { margin: 12px 0 16px; font-weight: 400; font-size: clamp(2.2rem, 5vw, 4.7rem
   *, *::before, *::after { scroll-behavior: auto !important; transition-duration: .01ms !important; }
 }
 
-.save-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 24px; border-bottom: 1px solid var(--border); color: #b9af9c; font: .875rem/1.5 ui-sans-serif, system-ui, sans-serif; }
+.save-bar { position: sticky; top: 0; z-index: 12; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 24px; border-bottom: 1px solid var(--border); background: rgb(9 10 8 / 94%); backdrop-filter: blur(12px); color: #b9af9c; font: .875rem/1.5 ui-sans-serif, system-ui, sans-serif; }
+.save-actions { display: flex; align-items: center; gap: 6px; }
+.next-step { white-space: nowrap; }
+.locations-panel > button.locked-location { cursor: pointer; opacity: .6; }
+.locations-panel > button.locked-location:hover { opacity: .9; background: rgb(196 154 87 / 8%); }
 .question-list { display: grid; gap: 14px; }
 .question-list button { white-space: normal; height: auto; min-height: 48px; padding: 14px; justify-content: flex-start; text-align: left; line-height: 1.5; }
 .deduction-card, .completion { margin-top: 24px; }
@@ -240,4 +244,4 @@ h1 { margin: 12px 0 16px; font-weight: 400; font-size: clamp(2.2rem, 5vw, 4.7rem
 .brief-card p, .empty-finding p { font-size: 1rem; }
 .case-status, .case-mark strong, .eyebrow, .panel-kicker, .finding-number, .scene-copy span, .field-title small { font-size: .75rem; }
 .primary-action, .locations-panel small, .case-progress small, .finding-card small, .evidence-hotspot span { font-size: .875rem; }
-@media (max-width: 620px) { .save-bar { padding: 8px 12px; font-size: .75rem; flex-wrap: wrap; } .case-status { font-size: 0; } .case-nav { overflow-x: auto; justify-content: flex-start; } .case-nav > button { flex: 0 0 62px; flex-direction: column; gap: 3px; font-size: .7rem; } .character-board { max-height: 300px; } .gift-view { width: calc(100% - 32px); padding: 38px 0 34px; } .gift-sealed { min-height: 520px; padding: 24px; } }
+@media (max-width: 620px) { .save-bar { padding: 8px 12px; font-size: .75rem; } .save-bar > output { display: none; } .save-actions { width: 100%; justify-content: space-between; } .next-step { font-size: .72rem; } .case-status { font-size: 0; } .case-nav { overflow-x: auto; justify-content: flex-start; } .case-nav > button { flex: 0 0 62px; flex-direction: column; gap: 3px; font-size: .7rem; } .character-board { max-height: 300px; } .gift-view { width: calc(100% - 32px); padding: 38px 0 34px; } .gift-sealed { min-height: 520px; padding: 24px; } }

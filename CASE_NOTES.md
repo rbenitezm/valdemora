@@ -26,6 +26,8 @@ La reconstrucción reproduce la resolución del prototipo original: cita por doc
 
 El regalo original de Laura permanece sellado hasta resolver correctamente la acusación. Abrirlo se guarda en la partida. El botón de continuar calcula la siguiente fase pendiente y, tras cerrar el caso, conduce al regalo.
 
+La barra superior mantiene visible ese siguiente paso durante toda la partida. Las zonas todavía bloqueadas del mapa ya no son controles muertos: al pulsarlas llevan al requisito pendiente. En la casa, cada control se etiqueta como entrada a una estancia para distinguir la navegación de la prueba que se registra dentro.
+
 La segunda deducción es una adaptación: trata el recorrido exterior como hipótesis compatible con las pruebas. No inventa un encaje físico de la pieza en la puerta, una hora para la humedad ni una identificación. Las partidas anteriores se conservan; las zonas exteriores requieren el testimonio registrado y la segunda deducción exige ambas nuevas pruebas.
 
 El acceso lateral y los establos usan una inspección en dos pasos. Entrar en la zona no registra una prueba: el jugador abre la inspección y elige el punto pertinente entre tres opciones. Las observaciones erróneas explican por qué no se incorporan al expediente. Si la prueba ya estaba guardada, la interfaz lo indica expresamente.
