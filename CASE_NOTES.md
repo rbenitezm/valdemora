@@ -38,6 +38,8 @@ La segunda deducción es una adaptación: trata el recorrido exterior como hipó
 
 El acceso lateral y los establos usan una inspección en dos pasos. Entrar en la zona no registra una prueba: el jugador abre la inspección y elige el punto pertinente entre tres opciones. Las observaciones erróneas explican por qué no se incorporan al expediente. Si la prueba ya estaba guardada, la interfaz lo indica expresamente.
 
+Los aciertos y fallos se acompañan de una animación y de un aviso sonoro breve sintetizado con Web Audio (`lib/sound.ts`); no se incluyen archivos de audio. La acusación correcta y la apertura del regalo usan un acorde más largo. El botón de sonido de la cabecera silencia los avisos y la preferencia se guarda en `valdemora-rebuild-sound`. Con `prefers-reduced-motion` las animaciones quedan desactivadas.
+
 Guardado local bajo `valdemora-rebuild-v1`, con validación y recuperación de datos dañados. No migra la clave del prototipo original. Reiniciar requiere confirmación. No se incluye IA en el juego.
 
 ## Verificación

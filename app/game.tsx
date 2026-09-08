@@ -19,7 +19,11 @@ import {
   Users,
   Gavel,
   Gift,
+  Volume2,
+  VolumeX,
+  X,
 } from 'lucide-react';
+import { play, setMuted } from '@/lib/sound';
 
 import { Button } from '@/components/ui/button';
 
@@ -49,6 +53,14 @@ const zoneBoxes: Record<'acceso' | 'establos', Box> = {
   establos: { left: '69%', top: '61%', width: '22%', height: '11%' },
 };
 
+type Tone = '' | 'hit' | 'miss' | 'win';
+type FeedbackState = { text: string; tone: Tone; nonce: number };
+const silentFeedback: FeedbackState = { text: '', tone: '', nonce: 0 };
+// The nonce changes on every message so the animation restarts even when the text repeats.
+function Feedback({ text, tone, nonce, className = '' }: FeedbackState & { className?: string }) {
+  return <output key={nonce} className={`feedback ${tone} ${className}`.trim()}>{(tone === 'hit' || tone === 'win') && <Check aria-hidden="true" />}{tone === 'miss' && <X aria-hidden="true" />}{text}</output>;
+}
+
 function CluePhoto({ id }: { id: number }) {
   const clue = clues.find(item => item.id === id);
   const image = clueImages[id];
@@ -66,7 +78,8 @@ export default function Home() {
   const [ready, setReady] = useState(false);
   const [saveStatus, setSaveStatus] = useState('Cargando partida…');
   const [resetOpen, setResetOpen] = useState(false);
-  const [feedback, setFeedback] = useState('');
+  const [feedback, setFeedback] = useState<FeedbackState>(silentFeedback);
+  const [sound, setSound] = useState(true);
   const [exteriorSearch, setExteriorSearch] = useState<View | null>(null);
   const [roomSearch, setRoomSearch] = useState<number | null>(null);
   const [roomId, setRoomId] = useState<number>(1);
@@ -96,10 +109,22 @@ export default function Home() {
     regalo: 'El regalo de Laura se abre al resolver correctamente la acusación final.',
   };
   const dispatch = (action: Action) => setGame(current => advance(current, action));
+  // Feedback with an optional cue: 'hit' and 'miss' animate the message, 'win' celebrates the final accusation.
+  const note = (text: string, tone: Tone = '') => { setFeedback(current => ({ text, tone, nonce: current.nonce + 1 })); if (tone) play(tone); };
+  const toggleSound = () => {
+    const next = !sound;
+    setSound(next);
+    setMuted(!next);
+    try { localStorage.setItem('valdemora-rebuild-sound', next ? 'on' : 'off'); } catch { /* Preference stays for this session only. */ }
+    if (next) play('tap');
+  };
   // Storage is browser-only: restore after hydration before enabling game actions.
   /* oxlint-disable react/react-compiler */
   useEffect(() => {
-    try { setGame(restore(localStorage.getItem('valdemora-rebuild-v1'))); }
+    try {
+      setGame(restore(localStorage.getItem('valdemora-rebuild-v1')));
+      if (localStorage.getItem('valdemora-rebuild-sound') === 'off') { setSound(false); setMuted(true); }
+    }
     catch { setSaveStatus('Guardado no disponible en este navegador.'); }
     setReady(true);
   }, []);
@@ -109,7 +134,7 @@ export default function Home() {
     catch { setSaveStatus('No se pudo guardar. Puedes seguir jugando en esta sesión.'); }
   }, [game, ready]);
   /* oxlint-enable react/react-compiler */
-  const navigate = (next: View) => { setView(next); setFeedback(''); setNotice(''); setExteriorSearch(null); setRoomSearch(null); };
+  const navigate = (next: View) => { setView(next); setFeedback(silentFeedback); setNotice(''); setExteriorSearch(null); setRoomSearch(null); };
   const resumeView = (): View => {
     if (game.solved) return 'regalo';
     if (game.reconstruction || requiredWitnesses.every(id => game.interviews.includes(id))) return 'conclusion';
@@ -154,10 +179,15 @@ export default function Home() {
           </span>
         </button>
 
-        <div className="case-status" aria-live="polite">
-          <span className="status-dot" />
-          {game.solved ? 'Caso resuelto' : 'Investigación abierta'}
-          <b>{game.found.length} / 7 pruebas</b>
+        <div className="case-tools">
+          <div className="case-status" aria-live="polite">
+            <span className="status-dot" />
+            {game.solved ? 'Caso resuelto' : 'Investigación abierta'}
+            <b key={game.found.length} className="count-pop">{game.found.length} / 7 pruebas</b>
+          </div>
+          <button type="button" className="sound-toggle" aria-pressed={sound} aria-label={sound ? 'Silenciar sonidos' : 'Activar sonidos'} title={sound ? 'Silenciar sonidos' : 'Activar sonidos'} onClick={toggleSound}>
+            {sound ? <Volume2 aria-hidden="true" /> : <VolumeX aria-hidden="true" />}
+          </button>
         </div>
       </header>
 
@@ -328,7 +358,7 @@ export default function Home() {
                   </div>
                   <button
                     className={`evidence-hotspot ${observationFound ? 'found' : ''}`}
-                    onClick={() => dispatch({ type: 'discover' })}
+                    onClick={() => { if (!observationFound) play('hit'); dispatch({ type: 'discover' }); }}
                     aria-label="Examinar la fotografía antigua de Valdemora"
                   >
                     {observationFound ? <Check aria-hidden="true" /> : <Eye aria-hidden="true" />}
@@ -371,32 +401,32 @@ export default function Home() {
             {game.exterior && <article className="brief-card deduction-card"><span>Interior · Deducción 03</span><h2>Las 00:06, dentro del apagón</h2>
               {game.found.length === clues.length && <figure className="evidence-board"><Image src={assetPath('/assets/original/panel-pistas.jpg')} alt="Panel original con las siete pruebas reunidas" width={375} height={325} /><figcaption>Panel de pruebas completo · Documento original del caso</figcaption></figure>}
               <div className="evidence-register">{clues.map(clue => <div key={clue.id}>{game.found.includes(clue.id) ? <Image src={assetPath(clueImages[clue.id].src)} alt={`Fotografía original: ${clue.title}`} width={clueImages[clue.id].width} height={91} /> : <span className="thumb-empty" aria-hidden="true" />}<div><span>{game.found.includes(clue.id) ? '✓' : '—'} {clue.location}</span><strong>{game.found.includes(clue.id) ? clue.title : 'Pendiente de inspección'}</strong></div></div>)}</div>
-              {game.interior ? <><h3>Relación temporal registrada</h3><p>Las 00:06 están entre el apagón de las 23:58 y el regreso de la luz a las 00:09. El reloj aporta una referencia que todavía necesita explicación.</p><p>Las siete pruebas están reunidas. La reconstrucción y los testimonios de los sospechosos serán la siguiente parte de la investigación.</p><Button onClick={() => navigate('cronologia')}>Consultar la cronología</Button></> : game.found.length === 7 ? <div className="question-list"><p>¿Qué puedes afirmar al comparar el reloj con los horarios?</p><Button variant="outline" onClick={() => setFeedback('Un reloj detenido no determina por sí solo la hora de la muerte.')}>Samuel murió exactamente a las 00:06.</Button><Button variant="outline" onClick={() => { dispatch({ type: 'interior' }); setFeedback('Relación temporal registrada. Aún falta explicar por qué se detuvo el reloj.'); }}>La hora del reloj cae dentro del apagón, pero no demuestra cuándo murió Samuel.</Button><Button variant="outline" onClick={() => setFeedback('La luz volvió a las 00:09, tres minutos después de la hora que marca el reloj.')}>El reloj se detuvo después de volver la luz.</Button></div> : <><p>Reúne las cuatro pruebas de la casa para contrastar el conjunto.</p><Button onClick={() => navigate('casa')}>Inspeccionar la casa</Button></>}
-              <output>{feedback}</output>
+              {game.interior ? <><h3>Relación temporal registrada</h3><p>Las 00:06 están entre el apagón de las 23:58 y el regreso de la luz a las 00:09. El reloj aporta una referencia que todavía necesita explicación.</p><p>Las siete pruebas están reunidas. La reconstrucción y los testimonios de los sospechosos serán la siguiente parte de la investigación.</p><Button onClick={() => navigate('cronologia')}>Consultar la cronología</Button></> : game.found.length === 7 ? <div className="question-list"><p>¿Qué puedes afirmar al comparar el reloj con los horarios?</p><Button variant="outline" onClick={() => note('Un reloj detenido no determina por sí solo la hora de la muerte.', 'miss')}>Samuel murió exactamente a las 00:06.</Button><Button variant="outline" onClick={() => { dispatch({ type: 'interior' }); note('Relación temporal registrada. Aún falta explicar por qué se detuvo el reloj.', 'hit'); }}>La hora del reloj cae dentro del apagón, pero no demuestra cuándo murió Samuel.</Button><Button variant="outline" onClick={() => note('La luz volvió a las 00:09, tres minutos después de la hora que marca el reloj.', 'miss')}>El reloj se detuvo después de volver la luz.</Button></div> : <><p>Reúne las cuatro pruebas de la casa para contrastar el conjunto.</p><Button onClick={() => navigate('casa')}>Inspeccionar la casa</Button></>}
+              <Feedback {...feedback} />
             </article>}
             {game.testimony && <article className="brief-card deduction-card"><span>Recorrido exterior · Deducción 02</span><h2>Una puerta, una pieza, un sonido</h2>
               <div className="question-list">{clues.filter(c => c.id === 6 || c.id === 7).map(c => <div key={c.id}><strong>{game.found.includes(c.id) ? c.title : 'Prueba pendiente de inspección'}</strong><p>{c.location}</p></div>)}</div>
-              {game.exterior ? <div className="completion"><h3>Hipótesis del recorrido registrada</h3><p>La humedad, la pieza metálica y el testimonio justifican investigar un posible recorrido exterior. No identifican a una persona ni fijan la hora de paso.</p><p>El interior de la casa está disponible. Busca allí las otras cuatro pruebas.</p><Button onClick={() => navigate('casa')}>Entrar en la casa</Button></div> : [6, 7].every(id => game.found.includes(id)) ? <div className="question-list"><p>Hugo oyó un ruido metálico a las 00:00. ¿Qué relación puedes establecer?</p><Button variant="outline" onClick={() => setFeedback('No sabemos si esta pieza produjo el ruido. Coincidir en el material no demuestra el origen del sonido.')}>La pieza produjo con certeza el ruido de medianoche.</Button><Button variant="outline" onClick={() => { dispatch({ type: 'exterior' }); setFeedback('Hipótesis registrada. Quedan por comprobar la hora y la persona.'); }}>Las pruebas son compatibles con un recorrido exterior que debemos contrastar.</Button><Button variant="outline" onClick={() => setFeedback('La humedad no permite determinar quién pasó ni a qué hora. Falta evidencia para acusar.')}>La humedad identifica al responsable de la muerte.</Button></div> : <><p>Necesitas registrar la humedad de la puerta y la pieza de los establos antes de relacionarlas.</p><Button onClick={openMap}>Volver a las zonas de inspección</Button></>}
+              {game.exterior ? <div className="completion"><h3>Hipótesis del recorrido registrada</h3><p>La humedad, la pieza metálica y el testimonio justifican investigar un posible recorrido exterior. No identifican a una persona ni fijan la hora de paso.</p><p>El interior de la casa está disponible. Busca allí las otras cuatro pruebas.</p><Button onClick={() => navigate('casa')}>Entrar en la casa</Button></div> : [6, 7].every(id => game.found.includes(id)) ? <div className="question-list"><p>Hugo oyó un ruido metálico a las 00:00. ¿Qué relación puedes establecer?</p><Button variant="outline" onClick={() => note('No sabemos si esta pieza produjo el ruido. Coincidir en el material no demuestra el origen del sonido.', 'miss')}>La pieza produjo con certeza el ruido de medianoche.</Button><Button variant="outline" onClick={() => { dispatch({ type: 'exterior' }); note('Hipótesis registrada. Quedan por comprobar la hora y la persona.', 'hit'); }}>Las pruebas son compatibles con un recorrido exterior que debemos contrastar.</Button><Button variant="outline" onClick={() => note('La humedad no permite determinar quién pasó ni a qué hora. Falta evidencia para acusar.', 'miss')}>La humedad identifica al responsable de la muerte.</Button></div> : <><p>Necesitas registrar la humedad de la puerta y la pieza de los establos antes de relacionarlas.</p><Button onClick={openMap}>Volver a las zonas de inspección</Button></>}
             </article>}
             {!observationFound ? <article className="brief-card"><h2>Aún no has registrado pruebas</h2><p>Explora el bosque y examina la fotografía antigua.</p><Button onClick={() => navigate('bosque')}>Ir al bosque</Button></article> : <>
               <div className="briefing-grid"><article className="brief-card"><span>Prueba 04 · Bosque</span><h2>{clues[3].title}</h2><p>En la fotografía aparece una puerta lateral de la casa.</p></article><article className="brief-card"><span>Observación del lugar</span><h2>Un acceso visible desde el bosque</h2><p>La disposición del edificio permite relacionar la fotografía con esa puerta.</p></article></div>
               <article className="brief-card deduction-card"><h2>¿Qué puedes concluir con lo que sabes?</h2>
                 {game.deduction ? <><p>Existe un acceso lateral que merece investigarse. Aún no sabes quién lo utilizó ni cuándo.</p><Button onClick={() => navigate('hugo')}>Interrogar a Hugo <ArrowRight /></Button></> : <div className="question-list">
-                  <Button variant="outline" onClick={() => setFeedback('La fotografía muestra un acceso, pero no identifica a ninguna persona.')}>La fotografía identifica al responsable.</Button>
-                  <Button variant="outline" onClick={() => { dispatch({ type: 'deduce' }); setFeedback('Deducción registrada. Puedes contrastarla con el testimonio de Hugo.'); }}>Existe otra vía de entrada o salida que debemos comprobar.</Button>
-                  <Button variant="outline" onClick={() => setFeedback('Una fotografía antigua no demuestra qué ocurrió durante el apagón.')}>La puerta se utilizó durante el apagón.</Button>
+                  <Button variant="outline" onClick={() => note('La fotografía muestra un acceso, pero no identifica a ninguna persona.', 'miss')}>La fotografía identifica al responsable.</Button>
+                  <Button variant="outline" onClick={() => { dispatch({ type: 'deduce' }); note('Deducción registrada. Puedes contrastarla con el testimonio de Hugo.', 'hit'); }}>Existe otra vía de entrada o salida que debemos comprobar.</Button>
+                  <Button variant="outline" onClick={() => note('Una fotografía antigua no demuestra qué ocurrió durante el apagón.', 'miss')}>La puerta se utilizó durante el apagón.</Button>
                 </div>}
-                <output>{feedback}</output>
+                <Feedback {...feedback} />
               </article>
             </>}
           </div>}
           {view === 'casa' && game.exterior && <div className="map-view">
             <Button variant="outline" className="quiet-action" onClick={openMap}><ArrowLeft /> Mapa de la finca</Button><div className="eyebrow exterior-heading">Recorrido interior</div><h1>Dentro de Valdemora</h1><p className="lead">Recorre las cuatro estancias y registra los objetos antes de interpretar su relación con la noche.</p>
-            <div className="house-layout"><div><SceneReference plan src="/assets/original/plano-casa.jpg" alt="Plano original de la casa Valdemora" box={roomBoxes[room.id]} caption={`Plano original · ${room.name}`} /><div className="question-list" aria-label="Entradas a las estancias de la casa">{rooms.map(item => <Button key={item.id} variant={item.id === room.id ? 'default' : 'outline'} aria-label={`Entrar en ${item.name}`} aria-pressed={item.id === room.id} onClick={() => { setRoomId(item.id); setRoomSearch(null); setFeedback(''); }}>{game.found.includes(item.id) && <Check aria-hidden="true" />}Entrar: {item.name}</Button>)}</div></div>
+            <div className="house-layout"><div><SceneReference plan src="/assets/original/plano-casa.jpg" alt="Plano original de la casa Valdemora" box={roomBoxes[room.id]} caption={`Plano original · ${room.name}`} /><div className="question-list" aria-label="Entradas a las estancias de la casa">{rooms.map(item => <Button key={item.id} variant={item.id === room.id ? 'default' : 'outline'} aria-label={`Entrar en ${item.name}`} aria-pressed={item.id === room.id} onClick={() => { setRoomId(item.id); setRoomSearch(null); setFeedback(silentFeedback); }}>{game.found.includes(item.id) && <Check aria-hidden="true" />}Entrar: {item.name}</Button>)}</div></div>
               <article className="brief-card"><span>{room.name}</span><h2>{room.title}</h2><p>{room.description}</p>
-                {game.found.includes(room.id) && roomSearch !== room.id ? <><div className="registered-stamp"><Check /> Prueba registrada</div><Button variant="outline" className="review-inspection" onClick={() => { setRoomSearch(room.id); setFeedback('Repaso abierto. Elige un punto de la estancia.'); }}>Revisar la inspección</Button></> : roomSearch !== room.id ? <Button className="primary-action" onClick={() => { setRoomSearch(room.id); setFeedback('Inspección abierta. Elige un punto de la estancia.'); }}><Eye /> Iniciar inspección</Button> : <div className="search-area"><p>Selecciona un punto para examinar:</p><div className="question-list">{room.spots.map(spot => <Button key={spot.label} variant="outline" onClick={() => { setFeedback(spot.message); if (spot.correct) dispatch({ type: 'discover', id: room.id }); }}>{spot.label}</Button>)}</div></div>}
-                <output className="inspection-feedback">{feedback}</output>
-                {game.found.includes(room.id) && <div className="interior-finding"><h3>{clues.find(clue => clue.id === room.id)?.title}</h3><CluePhoto id={room.id} /><p>{room.caution}</p><Button variant="outline" onClick={() => { const next = rooms.find(item => !game.found.includes(item.id)); if (next) { setRoomId(next.id); setRoomSearch(null); setFeedback(''); } else navigate('deducciones'); }}>{rooms.some(item => !game.found.includes(item.id)) ? 'Ir a una estancia pendiente' : 'Relacionar las siete pruebas'} <ArrowRight /></Button></div>}
+                {game.found.includes(room.id) && roomSearch !== room.id ? <><div className="registered-stamp"><Check /> Prueba registrada</div><Button variant="outline" className="review-inspection" onClick={() => { setRoomSearch(room.id); note('Repaso abierto. Elige un punto de la estancia.'); }}>Revisar la inspección</Button></> : roomSearch !== room.id ? <Button className="primary-action" onClick={() => { setRoomSearch(room.id); note('Inspección abierta. Elige un punto de la estancia.'); }}><Eye /> Iniciar inspección</Button> : <div className="search-area"><p>Selecciona un punto para examinar:</p><div className="question-list">{room.spots.map(spot => <Button key={spot.label} variant="outline" onClick={() => { note(spot.message, spot.correct ? 'hit' : 'miss'); if (spot.correct) dispatch({ type: 'discover', id: room.id }); }}>{spot.label}</Button>)}</div></div>}
+                <Feedback {...feedback} className="inspection-feedback" />
+                {game.found.includes(room.id) && <div className="interior-finding"><h3>{clues.find(clue => clue.id === room.id)?.title}</h3><CluePhoto id={room.id} /><p>{room.caution}</p><Button variant="outline" onClick={() => { const next = rooms.find(item => !game.found.includes(item.id)); if (next) { setRoomId(next.id); setRoomSearch(null); setFeedback(silentFeedback); } else navigate('deducciones'); }}>{rooms.some(item => !game.found.includes(item.id)) ? 'Ir a una estancia pendiente' : 'Relacionar las siete pruebas'} <ArrowRight /></Button></div>}
               </article>
             </div>
           </div>}
@@ -404,28 +434,28 @@ export default function Home() {
             <div className="eyebrow">Fase 04 · Testimonios</div><h1>Todos ocultan algo</h1><p className="lead">Un secreto puede explicar una mentira sin convertirla en asesinato. Registra las cuatro declaraciones clave para reconstruir la noche; las demás amplían el expediente.</p>
             <Image className="character-board" src={assetPath('/assets/original/personajes.jpg')} alt="Fichas originales de personajes del caso Valdemora" width={1536} height={1024} sizes="(max-width: 900px) 100vw, 70vw" />
             <div className="interview-layout"><div className="witness-list" aria-label="Personas disponibles">{witnesses.map(item => <button key={item.id} className={item.id === witness.id ? 'active' : ''} onClick={() => setWitnessId(item.id)}><span>{game.interviews.includes(item.id) ? '✓' : item.essential ? '!' : '·'}</span><div><strong>{item.name}</strong><small>{item.essential ? 'Declaración clave' : 'Declaración adicional'}</small></div></button>)}</div>
-              <article className="brief-card witness-card"><span>Entrevista · {witness.name}</span><h2>{witness.profile}</h2><p>Pregunta por aquello que no contó al comenzar la investigación.</p>{game.interviews.includes(witness.id) ? <><h3>{witness.secret}</h3><blockquote className="testimony">«{witness.statement}»</blockquote><small>Declaración adaptada a partir de la ficha original.</small></> : <Button className="primary-action" onClick={() => dispatch({ type: 'interview', id: witness.id })}>Registrar declaración</Button>}</article>
+              <article className="brief-card witness-card"><span>Entrevista · {witness.name}</span><h2>{witness.profile}</h2><p>Pregunta por aquello que no contó al comenzar la investigación.</p>{game.interviews.includes(witness.id) ? <><h3>{witness.secret}</h3><blockquote className="testimony">«{witness.statement}»</blockquote><small>Declaración adaptada a partir de la ficha original.</small></> : <Button className="primary-action" onClick={() => { play('tap'); dispatch({ type: 'interview', id: witness.id }); }}>Registrar declaración</Button>}</article>
             </div>
             <article className="brief-card interview-progress"><span>Declaraciones clave</span><h2>{requiredWitnesses.filter(id => game.interviews.includes(id)).length} / {requiredWitnesses.length}</h2>{requiredWitnesses.every(id => game.interviews.includes(id)) ? <><p>Ya puedes ordenar los hechos sin confundir los secretos personales con la responsabilidad por la muerte.</p><Button onClick={() => navigate('conclusion')}>Reconstruir la noche <ArrowRight /></Button></> : <p>Busca las fichas marcadas con un signo de exclamación.</p>}</article>
           </div>}
           {view === 'conclusion' && game.interior && requiredWitnesses.every(id => game.interviews.includes(id)) && <div className="map-view">
             <div className="eyebrow">Fases 06 y 07 · La verdad</div><h1>Reconstrucción del caso</h1><p className="lead">Ordena únicamente lo que encaja con las siete pruebas, los horarios y las declaraciones.</p>
             {!game.reconstruction ? <article className="brief-card deduction-card"><h2>¿Qué relato explica mejor el conjunto?</h2><div className="question-list">
-              <Button variant="outline" onClick={() => setFeedback('La hora del reloj no basta para demostrar un plan previo, y varias mentiras tienen motivos personales.')}>Javier planeó la muerte y preparó el apagón para ocultarla.</Button>
-              <Button variant="outline" onClick={() => { dispatch({ type: 'reconstruct' }); setFeedback('Reconstrucción coherente. Ya puedes formular una acusación completa.'); }}>Samuel citó a alguien por los documentos; hubo una discusión y una caída, seguida de una huida por el acceso lateral.</Button>
-              <Button variant="outline" onClick={() => setFeedback('La pieza metálica y la puerta justifican investigar un recorrido, pero no prueban que un intruso desconocido matara a Samuel.')}>Un intruso entró desde los establos y atacó a Samuel a las 00:06.</Button>
-            </div><output>{feedback}</output></article> : <>
+              <Button variant="outline" onClick={() => note('La hora del reloj no basta para demostrar un plan previo, y varias mentiras tienen motivos personales.', 'miss')}>Javier planeó la muerte y preparó el apagón para ocultarla.</Button>
+              <Button variant="outline" onClick={() => { dispatch({ type: 'reconstruct' }); note('Reconstrucción coherente. Ya puedes formular una acusación completa.', 'hit'); }}>Samuel citó a alguien por los documentos; hubo una discusión y una caída, seguida de una huida por el acceso lateral.</Button>
+              <Button variant="outline" onClick={() => note('La pieza metálica y la puerta justifican investigar un recorrido, pero no prueban que un intruso desconocido matara a Samuel.', 'miss')}>Un intruso entró desde los establos y atacó a Samuel a las 00:06.</Button>
+            </div><Feedback {...feedback} /></article> : <>
               <article className="brief-card reconstruction"><span>Relato compatible con las pruebas</span><h2>Una discusión, una caída y una decisión</h2><ol><li>Samuel había citado a Inés para hablar de documentos relacionados con Valdemora.</li><li>La conversación se volvió tensa y, durante un forcejeo, Samuel cayó y se golpeó la cabeza.</li><li>El apagón impidió que los demás vieran con claridad lo ocurrido.</li><li>Inés no pidió ayuda y abandonó el lugar por la puerta lateral.</li></ol><p>Esta reconstrucción conserva la resolución del prototipo original. La acusación debe identificar tanto la responsabilidad como la conducta posterior.</p></article>
               {!game.solved ? <article className="brief-card accusation"><span>Acusación final</span><h2>Presenta una teoría completa</h2>
                 <fieldset><legend>¿A quién acusas?</legend><RadioGroup name="accused" value={accused} onValueChange={value => setAccused(String(value))}>{[['ines','Inés Robles'],['javier','Javier López'],['veronica','Verónica Benítez'],['maria','María Gómez']].map(([value,label]) => { const id = `accused-${value}`; return <label className="radio-option" htmlFor={id} key={value}><RadioGroupItem id={id} value={value} /><span>{label}</span></label>; })}</RadioGroup></fieldset>
                 <fieldset><legend>¿Qué ocurrió?</legend><RadioGroup name="event-theory" value={eventTheory} onValueChange={value => setEventTheory(String(value))}>{[['fall','Una discusión terminó en una caída fatal.'],['attack','Fue un ataque premeditado durante el apagón.'],['accident','Samuel sufrió un accidente estando solo.']].map(([value,label]) => { const id = `event-${value}`; return <label className="radio-option" htmlFor={id} key={value}><RadioGroupItem id={id} value={value} /><span>{label}</span></label>; })}</RadioGroup></fieldset>
                 <fieldset><legend>¿Qué hizo después?</legend><RadioGroup name="exit-theory" value={exitTheory} onValueChange={value => setExitTheory(String(value))}>{[['side','Se marchó por la puerta lateral sin pedir ayuda.'],['stable','Ocultó las pruebas en los establos.'],['stay','Permaneció con el grupo hasta las 00:17.']].map(([value,label]) => { const id = `exit-${value}`; return <label className="radio-option" htmlFor={id} key={value}><RadioGroupItem id={id} value={value} /><span>{label}</span></label>; })}</RadioGroup></fieldset>
-                <Button className="primary-action" onClick={() => { if (!accused || !eventTheory || !exitTheory) setFeedback('Completa las tres partes de la acusación.'); else if (accused === 'ines' && eventTheory === 'fall' && exitTheory === 'side') { dispatch({ type: 'solve' }); setFeedback('Acusación correcta.'); } else setFeedback('La teoría no encaja con todo el expediente. Revisa quién discutió con Samuel, la naturaleza de la caída y el acceso lateral.'); }}>Confirmar acusación</Button><output>{feedback}</output>
+                <Button className="primary-action" onClick={() => { if (!accused || !eventTheory || !exitTheory) note('Completa las tres partes de la acusación.'); else if (accused === 'ines' && eventTheory === 'fall' && exitTheory === 'side') { dispatch({ type: 'solve' }); note('Acusación correcta.', 'win'); } else note('La teoría no encaja con todo el expediente. Revisa quién discutió con Samuel, la naturaleza de la caída y el acceso lateral.', 'miss'); }}>Confirmar acusación</Button><Feedback {...feedback} />
               </article> : <article className="case-solved"><span>Caso 001 · Cerrado</span><h2>Acusación correcta</h2><p>Has distinguido las mentiras personales de los hechos relevantes y has explicado las siete pruebas sin atribuirles más de lo que demuestran.</p><div className="final-actions"><Button onClick={() => navigate('regalo')}>Abrir el regalo de Laura <Gift /></Button><Button variant="outline" onClick={() => navigate('cronologia')}>Revisar el expediente</Button></div></article>}
             </>}
           </div>}
           {view === 'regalo' && game.solved && <div className="gift-view">
-            {!game.giftOpened ? <article className="gift-sealed"><Gift aria-hidden="true" /><div className="eyebrow">Una última sorpresa</div><h1>El caso está cerrado.</h1><p>Laura dejó algo para cuando terminara la investigación. La recompensa original de Valdemora está preparada.</p><Button className="primary-action" onClick={() => dispatch({ type: 'gift' })}>Abrir el sobre</Button></article> : <>
+            {!game.giftOpened ? <article className="gift-sealed"><Gift aria-hidden="true" /><div className="eyebrow">Una última sorpresa</div><h1>El caso está cerrado.</h1><p>Laura dejó algo para cuando terminara la investigación. La recompensa original de Valdemora está preparada.</p><Button className="primary-action" onClick={() => { play('win'); dispatch({ type: 'gift' }); }}>Abrir el sobre</Button></article> : <>
               <div className="eyebrow">Regalo de Laura</div><h1>Una noche diferente en Madrid.</h1><p className="lead">La invitación queda fuera del expediente. Esta parte es sólo para vosotros.</p><div className="gift-ticket"><Image src={assetPath('/assets/original/regalo-laura.jpg')} alt="Invitación de Laura para una experiencia en StreetXO Madrid" width={1536} height={1024} priority sizes="(max-width: 900px) 100vw, 80vw" /></div><div className="final-actions"><Button variant="outline" onClick={() => navigate('conclusion')}>Volver al caso cerrado</Button><Button variant="outline" onClick={() => navigate('intro')}>Volver al inicio</Button></div>
             </>}
           </div>}
@@ -436,7 +466,7 @@ export default function Home() {
             <p className="lead">{view === 'acceso' ? 'El acceso que reconociste en la fotografía está frente a ti. Busca una alteración relevante sin asumir todavía cuándo se produjo.' : 'El recorrido continúa por los establos. Busca un objeto que pueda guardar relación con el sonido de medianoche.'}</p>
             <div className="briefing-grid"><article className="brief-card"><span>Inspección del lugar</span><h2>{view === 'acceso' ? 'Puerta de servicio' : 'Zona de paso'}</h2>
               <SceneReference src="/assets/original/mapa-finca.jpg" alt="Mapa original de la finca" box={zoneBoxes[view]} caption={`Mapa original · ${view === 'acceso' ? 'Acceso lateral' : 'Establos'}`} />
-              {game.found.includes(view === 'acceso' ? 6 : 7) && exteriorSearch !== view ? <><p>Esta zona ya fue inspeccionada y la prueba permanece guardada en tu partida.</p><div className="registered-stamp"><Check /> Prueba registrada</div><Button variant="outline" className="review-inspection" onClick={() => { setExteriorSearch(view); setFeedback('Repaso abierto. Elige un punto del entorno.'); }}>Revisar la inspección</Button></> : exteriorSearch !== view ? <><p>Abre la inspección y decide qué parte del entorno merece quedar registrada.</p><Button className="primary-action" onClick={() => { setExteriorSearch(view); setFeedback('Inspección abierta. Elige un punto del entorno.'); }}><Eye /> Iniciar inspección</Button></> : <div className="search-area"><p>Selecciona un punto para examinar:</p><div className="question-list">{(view === 'acceso' ? [
+              {game.found.includes(view === 'acceso' ? 6 : 7) && exteriorSearch !== view ? <><p>Esta zona ya fue inspeccionada y la prueba permanece guardada en tu partida.</p><div className="registered-stamp"><Check /> Prueba registrada</div><Button variant="outline" className="review-inspection" onClick={() => { setExteriorSearch(view); note('Repaso abierto. Elige un punto del entorno.'); }}>Revisar la inspección</Button></> : exteriorSearch !== view ? <><p>Abre la inspección y decide qué parte del entorno merece quedar registrada.</p><Button className="primary-action" onClick={() => { setExteriorSearch(view); note('Inspección abierta. Elige un punto del entorno.'); }}><Eye /> Iniciar inspección</Button></> : <div className="search-area"><p>Selecciona un punto para examinar:</p><div className="question-list">{(view === 'acceso' ? [
                 ['La manilla y la cerradura', 'La cerradura no presenta daños visibles. No puedes deducir que la puerta fuera forzada.', false],
                 ['El marco superior', 'El marco está intacto. No encuentras nada que deba incorporarse como prueba.', false],
                 ['El umbral y el suelo', 'La humedad junto a la puerta es una observación verificable. Prueba registrada.', true],
@@ -444,15 +474,15 @@ export default function Home() {
                 ['Las monturas', 'Las monturas están colocadas. No explican el objeto metálico del expediente.', false],
                 ['El montón de paja', 'No encuentras ninguna alteración relevante entre la paja.', false],
                 ['El suelo junto al paso', 'Encuentras una pieza metálica suelta. Prueba registrada.', true],
-              ]).map(([label, message, correct]) => <Button key={String(label)} variant="outline" onClick={() => { setFeedback(String(message)); if (correct) dispatch({ type: 'discover', id: view === 'acceso' ? 6 : 7 }); }}>{label}</Button>)}</div></div>}
-              <output className="inspection-feedback">{feedback}</output>
+              ]).map(([label, message, correct]) => <Button key={String(label)} variant="outline" onClick={() => { note(String(message), correct ? 'hit' : 'miss'); if (correct) dispatch({ type: 'discover', id: view === 'acceso' ? 6 : 7 }); }}>{label}</Button>)}</div></div>}
+              <Feedback {...feedback} className="inspection-feedback" />
             </article>
               <aside className="brief-card"><span>Cuaderno de campo</span>{game.found.includes(view === 'acceso' ? 6 : 7) ? <><h2>{view === 'acceso' ? clues[5].title : clues[6].title}</h2><CluePhoto id={view === 'acceso' ? 6 : 7} /><p>Prueba {view === 'acceso' ? '06' : '07'} incorporada al expediente. Relaciónala con la fotografía y el testimonio.</p><Button onClick={() => navigate(game.found.includes(view === 'acceso' ? 7 : 6) ? 'deducciones' : view === 'acceso' ? 'establos' : 'acceso')}>{game.found.includes(view === 'acceso' ? 7 : 6) ? 'Relacionar las pruebas' : view === 'acceso' ? 'Continuar a los establos' : 'Inspeccionar la puerta'} <ArrowRight /></Button></> : <><h2>Observación pendiente</h2><p>Examina el punto de interés para incorporar la prueba al expediente.</p></>}</aside></div>
           </div>}
           {view === 'hugo' && game.deduction && <div className="map-view">
             <div className="eyebrow">Testimonio 01 · El apagón</div><h1>Lo que escuchó Hugo</h1><p className="lead">Separa lo que oyó de lo que pudo ver. Una posibilidad todavía no es una prueba.</p>
             <div className="question-list">{questions.map(q => <article className="brief-card" key={q.id}><Button variant="outline" onClick={() => dispatch({ type: 'answer', id: q.id })}>{game.answers.includes(q.id) && <Check />}{q.question}</Button>{game.answers.includes(q.id) && <blockquote className="testimony">«{q.answer}»</blockquote>}</article>)}</div>
-            {game.answers.length === questions.length && <article className="brief-card deduction-card"><h2>Un ruido, ninguna identificación</h2><p>Hugo sitúa el sonido metálico a las 00:00, durante el apagón. Su declaración no identifica a nadie ni demuestra que se abriera la puerta.</p><Button disabled={game.testimony} onClick={() => dispatch({ type: 'testimony' })}>{game.testimony ? 'Testimonio registrado' : 'Registrar testimonio'}</Button></article>}
+            {game.answers.length === questions.length && <article className="brief-card deduction-card"><h2>Un ruido, ninguna identificación</h2><p>Hugo sitúa el sonido metálico a las 00:00, durante el apagón. Su declaración no identifica a nadie ni demuestra que se abriera la puerta.</p><Button disabled={game.testimony} onClick={() => { play('hit'); dispatch({ type: 'testimony' }); }}>{game.testimony ? 'Testimonio registrado' : 'Registrar testimonio'}</Button></article>}
             {game.testimony && <article className="brief-card completion"><span>Primer recorrido completado</span><h2>La siguiente pregunta está en la puerta</h2><p>El acceso lateral y los establos están disponibles. Contrasta las pruebas del exterior con el ruido que escuchó Hugo.</p><Button onClick={() => navigate('acceso')}>Inspeccionar el acceso lateral <ArrowRight /></Button></article>}
           </div>}
           {view === 'cronologia' && <div className="map-view"><div className="eyebrow">Registro de la noche</div><h1>Los minutos del apagón</h1><p className="lead">Horarios recogidos en el expediente inicial. Los testimonios ayudarán a interpretarlos.</p><ol className="timeline-list">{timeline.map(([time, event]) => <li key={time}><time>{time}</time><div>{event}{time === '00:00' && game.testimony && <small>Declaración de Hugo registrada · no identifica al responsable.</small>}</div></li>)}</ol></div>}
