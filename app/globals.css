@@ -58,6 +58,10 @@ button:focus-visible { outline: 2px solid #d8b473; outline-offset: 3px; }
 .case-nav > button.active { border-left-color: #c49a57; color: #f1e4ca; background: linear-gradient(90deg, rgb(196 154 87 / 12%), transparent); }
 .case-nav > button.active svg { color: #c49a57; }
 .case-nav > button:disabled { cursor: not-allowed; opacity: .55; }
+.case-nav > button.locked { opacity: .55; cursor: pointer; }
+.case-nav > button.locked:hover { opacity: .85; background: rgb(196 154 87 / 6%); }
+.case-nav > button .lock-dot { justify-self: end; }
+.lock-notice { display: block; margin: 0; padding: 12px 24px; border-bottom: 1px solid rgb(196 154 87 / 32%); background: rgb(196 154 87 / 9%); color: #e4d5b4; font: .875rem/1.55 ui-sans-serif, system-ui, sans-serif; }
 .case-progress { margin-top: auto; border-top: 1px solid rgb(196 154 87 / 18%); padding: 22px 10px 0; }
 .case-progress > div:first-child { display: flex; justify-content: space-between; color: #9c927f; font: .65rem/1 ui-sans-serif, system-ui, sans-serif; text-transform: uppercase; letter-spacing: .08em; }
 .case-progress strong { color: #d6b779; }
@@ -98,6 +102,14 @@ h1 { margin: 12px 0 16px; font-weight: 400; font-size: clamp(2.2rem, 5vw, 4.7rem
 .map-board img { width: 100%; height: 100%; object-fit: cover; object-position: center top; opacity: .68; filter: saturate(.68) contrast(1.12); transform: scale(1.04); }
 .map-board::after { content: ''; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 0 100px 26px rgb(2 3 2 / 84%); }
 .map-marker { position: absolute; z-index: 3; left: 28%; top: 24%; display: flex; gap: 8px; align-items: center; color: #f2e5c9; border: 1px solid rgb(196 154 87 / 50%); padding: 9px 12px; background: rgb(10 12 9 / 88%); cursor: pointer; font-size: .82rem; box-shadow: 0 7px 24px #000; }
+.map-marker { white-space: nowrap; }
+.marker-bosque { left: 28%; top: 24%; }
+.marker-casa { left: auto; right: 6%; top: 22%; }
+.marker-acceso { left: 9%; top: 42%; }
+.marker-establos { left: auto; right: 6%; top: 46%; }
+.map-marker.locked { opacity: .62; border-style: dashed; }
+.map-marker.locked span { background: #82745e; box-shadow: none; }
+.map-marker.locked:hover { opacity: .95; }
 .map-marker span { width: 8px; height: 8px; background: #8aa76d; border-radius: 999px; box-shadow: 0 0 0 5px rgb(138 167 109 / 14%); }
 .map-coordinate { position: absolute; z-index: 3; left: 18px; bottom: 15px; color: #817866; font: .61rem/1 ui-sans-serif, system-ui, sans-serif; letter-spacing: .15em; text-transform: uppercase; }
 .locations-panel { border: 1px solid rgb(196 154 87 / 20%); background: rgb(14 15 12 / 80%); padding: 22px 16px; }
@@ -252,3 +264,23 @@ h1 { margin: 12px 0 16px; font-weight: 400; font-size: clamp(2.2rem, 5vw, 4.7rem
 .case-status, .case-mark strong, .eyebrow, .panel-kicker, .finding-number, .scene-copy span, .field-title small { font-size: .75rem; }
 .primary-action, .locations-panel small, .case-progress small, .finding-card small, .evidence-hotspot span { font-size: .875rem; }
 @media (max-width: 620px) { .save-bar { padding: 8px 12px; font-size: .75rem; } .save-bar > output { display: none; } .save-actions { width: 100%; justify-content: space-between; } .next-step { font-size: .72rem; } .case-status { font-size: 0; } .case-nav { overflow-x: auto; justify-content: flex-start; } .case-nav > button { flex: 0 0 62px; flex-direction: column; gap: 3px; font-size: .7rem; } .character-board { max-height: 300px; } .gift-view { width: calc(100% - 32px); padding: 38px 0 34px; } .gift-sealed { min-height: 520px; padding: 24px; } }
+
+/* Photographs from the original evidence panel and highlighted areas on the original plan and map. */
+.clue-photo { margin: 16px 0 0; }
+.clue-photo img { display: block; width: min(100%, 220px); height: auto; border: 1px solid rgb(232 216 183 / 25%); box-shadow: 0 10px 24px rgb(0 0 0 / 35%); }
+.finding-card .clue-photo img { border-color: #6b5538; }
+.clue-photo figcaption, .scene-reference figcaption { margin-top: 8px; color: var(--muted-foreground); font: .72rem/1.5 ui-sans-serif, system-ui, sans-serif; letter-spacing: .08em; text-transform: uppercase; }
+.finding-card .clue-photo figcaption { color: #5d4931; }
+.scene-reference { margin: 18px 0 0; }
+.scene-frame { position: relative; overflow: hidden; aspect-ratio: 275 / 228; max-width: 420px; border: 1px solid var(--border); background: #0f120d; }
+.scene-frame img { display: block; width: 100%; height: auto; }
+.plan-reference .scene-frame { aspect-ratio: 315 / 325; background: #11120f; }
+.plan-reference .scene-frame img { height: 100%; object-fit: fill; }
+.plan-reference { margin: 0 0 20px; }
+.scene-ring { position: absolute; border: 2px solid #d6b571; box-shadow: 0 0 0 3px rgb(214 181 113 / 22%), 0 0 18px rgb(214 181 113 / 35%); animation: ring-pulse 2.2s ease-in-out infinite; }
+@keyframes ring-pulse { 50% { box-shadow: 0 0 0 7px rgb(214 181 113 / 10%), 0 0 24px rgb(214 181 113 / 50%); } }
+.evidence-register > div { display: grid; grid-template-columns: 64px 1fr; gap: 14px; align-items: center; }
+.evidence-register img { width: 64px; height: 64px; object-fit: cover; border: 1px solid var(--border); }
+.thumb-empty { width: 64px; height: 64px; border: 1px dashed rgb(196 154 87 / 30%); }
+.plan-reference .scene-ring { border-color: #b94435; background: rgb(185 68 53 / 12%); box-shadow: 0 0 0 3px rgb(185 68 53 / 22%); animation: none; }
+@media (max-width: 620px) { .marker-casa { top: 36%; } }

@@ -30,6 +30,10 @@ El regalo original de Laura permanece sellado hasta resolver correctamente la ac
 
 La barra superior mantiene visible ese siguiente paso durante toda la partida. Las zonas todavía bloqueadas del mapa ya no son controles muertos: al pulsarlas llevan al requisito pendiente. En la casa, cada control se etiqueta como entrada a una estancia para distinguir la navegación de la prueba que se registra dentro.
 
+Las secciones bloqueadas del menú lateral (Hugo, Personas, Conclusión y Regalo) tampoco son controles muertos: al pulsarlas llevan al paso pendiente y muestran un aviso con lo que falta para desbloquearlas. El mapa de la finca marca las cuatro zonas sobre la ilustración original; las bloqueadas se muestran con trazo discontinuo y siguen la misma regla.
+
+Las fotografías de las siete pruebas son recortes del panel original (`public/assets/pistas`) y sólo se muestran cuando la prueba queda registrada. Durante una inspección se muestra el plano o el mapa original con la zona señalada; no existen fotografías de los puntos descartados, así que esas observaciones siguen siendo sólo texto.
+
 La segunda deducción es una adaptación: trata el recorrido exterior como hipótesis compatible con las pruebas. No inventa un encaje físico de la pieza en la puerta, una hora para la humedad ni una identificación. Las partidas anteriores se conservan; las zonas exteriores requieren el testimonio registrado y la segunda deducción exige ambas nuevas pruebas.
 
 El acceso lateral y los establos usan una inspección en dos pasos. Entrar en la zona no registra una prueba: el jugador abre la inspección y elige el punto pertinente entre tres opciones. Las observaciones erróneas explican por qué no se incorporan al expediente. Si la prueba ya estaba guardada, la interfaz lo indica expresamente.
