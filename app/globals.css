@@ -238,7 +238,7 @@ h1 { margin: 12px 0 16px; font-weight: 400; font-size: clamp(2.2rem, 5vw, 4.7rem
 .accusation .radio-option { display: flex; gap: 12px; align-items: center; margin: 4px 0; padding: 10px 12px; border: 1px solid transparent; border-radius: 6px; color: #b9af9c; cursor: pointer; transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease; }
 .accusation .radio-option:hover { color: var(--foreground); background: rgba(255, 255, 255, .035); }
 .accusation .radio-option:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
-.accusation .radio-option:has([data-checked]) { color: var(--foreground); border-color: rgba(180, 139, 75, .55); background: rgba(180, 139, 75, .1); }
+.accusation .radio-option:has([data-checked]), .accusation .radio-option:has(:checked) { color: var(--foreground); border-color: rgba(180, 139, 75, .55); background: rgba(180, 139, 75, .1); }
 .case-solved { margin-top: 20px; padding: clamp(28px, 6vw, 64px); border: 1px solid #8aa76d; background: radial-gradient(circle at top right, rgb(138 167 109 / 18%), transparent 45%), #11120f; }
 .case-solved > span { color: #a9bd91; font: .75rem/1 ui-sans-serif, system-ui, sans-serif; letter-spacing: .16em; text-transform: uppercase; }
 .case-solved h2 { font-size: clamp(2rem, 5vw, 4rem); font-weight: 400; margin: 14px 0; }
@@ -366,3 +366,25 @@ h1 { margin: 12px 0 16px; font-weight: 400; font-size: clamp(2.2rem, 5vw, 4.7rem
 .desk-note .clue-photo img { width: min(100%, 300px); }
 .desk-note .testimony { font-size: 1.05rem; text-transform: uppercase; letter-spacing: .04em; }
 .desk-note small { display: block; margin-top: 12px; color: var(--muted-foreground); font: .8rem/1.5 ui-sans-serif, system-ui, sans-serif; }
+
+/* Living timeline and justified accusation. */
+.timeline-count { margin: 0 0 6px; color: #b99254; font: 600 .68rem/1.4 ui-sans-serif, system-ui, sans-serif; letter-spacing: .16em; text-transform: uppercase; }
+.timeline-list.living li { padding-left: 14px; border-left: 2px solid transparent; opacity: .7; transition: opacity .3s ease; }
+.timeline-list.living li.linked { opacity: 1; }
+.timeline-list.living li.blackout { border-left-color: #b94435; background: linear-gradient(90deg, rgb(185 68 53 / 10%), transparent 55%); }
+.timeline-list.living li.derived { border-left-style: dashed; border-left-color: #71895c; }
+.timeline-list.living li.linked time { color: #f1e4ca; text-shadow: 0 0 12px rgb(214 181 113 / 50%); }
+.blackout-tag { display: block; margin-top: 4px; color: #d0705f; font: .7rem/1.4 ui-sans-serif, system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; font-style: normal; }
+.derived-tag { color: #8aa76d; }
+.timeline-notes { margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.timeline-list .timeline-notes li { display: block; padding: 0; border: 0; opacity: 1; font-size: .9rem; color: #c9c0ad; line-height: 1.5; animation: rise-in .5s ease-out; }
+.timeline-notes b { display: inline-block; min-width: 92px; margin-right: 6px; color: #b99254; font: 600 .62rem/1 ui-sans-serif, system-ui, sans-serif; letter-spacing: .12em; text-transform: uppercase; }
+.timeline-notes li.prueba b { color: #8aa76d; }
+.timeline-notes li.declaracion b { color: #d6b779; }
+.timeline-notes li.deduccion b { color: #d0705f; }
+.timeline-notes li.ficha b { color: #9a8f7b; }
+.field-hint { margin: 8px 0 10px; color: var(--muted-foreground); font-size: .9rem; line-height: 1.5; }
+.evidence-picks { display: grid; gap: 2px; }
+.evidence-picks input { width: 16px; height: 16px; flex: none; accent-color: #c49a57; }
+.evidence-picks small { display: block; color: var(--muted-foreground); font: .78rem/1.4 ui-sans-serif, system-ui, sans-serif; }
+@media (max-width: 620px) { .timeline-notes b { display: block; min-width: 0; margin: 0 0 2px; } }

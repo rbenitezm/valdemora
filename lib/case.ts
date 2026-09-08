@@ -136,6 +136,73 @@ export function advance(state: GameState, action: Action): GameState {
   if (action.type === 'testimony' && questions.every(q => state.answers.includes(q.id))) return { ...state, testimony: true };
   return state;
 }
+// Living timeline: each moment gains notes as evidence, statements and deductions explain it. Nothing here adds facts.
+export type TimelineNote = { kind: 'prueba' | 'declaracion' | 'deduccion' | 'ficha'; text: string };
+export type TimelineRow = { time: string; event: string; notes: TimelineNote[]; blackout: boolean; derived: boolean };
+export const blackout = { start: '23:58', end: '00:09' } as const;
+export function timelineNotes(state: GameState, time: string): TimelineNote[] {
+  const notes: TimelineNote[] = [];
+  const has = (id: number) => state.found.includes(id);
+  const said = (id: string) => state.interviews.includes(id);
+  switch (time) {
+    case '23:47':
+      if (said('maria')) notes.push({ kind: 'declaracion', text: 'María: Samuel le escribió antes de desaparecer; quería hablar sobre Valdemora.' });
+      if (said('daniel')) notes.push({ kind: 'declaracion', text: 'Daniel: vio a Samuel discutiendo con Inés antes del apagón.' });
+      break;
+    case '23:58':
+      if (said('karalee')) notes.push({ kind: 'declaracion', text: 'Karalee: durante el apagón vio una silueta dirigirse hacia la zona de servicio, sin reconocerla.' });
+      if (said('ines')) notes.push({ kind: 'declaracion', text: 'Inés: asegura que se marchó antes del apagón.' });
+      break;
+    case '00:00':
+      if (state.testimony) notes.push({ kind: 'declaracion', text: 'Hugo: un ruido metálico a medianoche. No identifica a nadie.' });
+      if (has(7)) notes.push({ kind: 'prueba', text: 'Pieza metálica en el suelo de los establos. Coincidir en el material no demuestra el origen del sonido.' });
+      if (has(6)) notes.push({ kind: 'prueba', text: 'Marca de humedad junto a la puerta lateral.' });
+      if (state.exterior) notes.push({ kind: 'deduccion', text: 'Las pruebas son compatibles con un recorrido exterior que no identifica a nadie.' });
+      break;
+    case '00:03':
+      if (state.testimony) notes.push({ kind: 'ficha', text: 'Django, según la ficha, detecta cuando algo no va bien y durante el apagón ladra insistentemente.' });
+      break;
+    case '00:05':
+      if (state.testimony) notes.push({ kind: 'ficha', text: 'Ginger, según la ficha, hace maullidos largos, como si hablara.' });
+      break;
+    case '00:06':
+      if (has(1)) notes.push({ kind: 'prueba', text: 'Reloj de pared del salón detenido a las 00:06.' });
+      if (state.interior) notes.push({ kind: 'deduccion', text: 'La hora cae dentro del apagón, pero no demuestra cuándo murió Samuel.' });
+      break;
+    case '00:07':
+      if (state.reconstruction) notes.push({ kind: 'deduccion', text: 'Reconstrucción: durante un forcejeo, Samuel cayó y se golpeó la cabeza.' });
+      break;
+    case '00:09':
+      if (state.interior) notes.push({ kind: 'deduccion', text: 'La luz vuelve tres minutos después de la hora que marca el reloj.' });
+      break;
+    case '00:17':
+      if (state.solved) notes.push({ kind: 'deduccion', text: 'Inés ya había abandonado el lugar por la puerta lateral sin pedir ayuda.' });
+      break;
+  }
+  return notes;
+}
+export function livingTimeline(state: GameState): TimelineRow[] {
+  const inBlackout = (time: string) => time >= blackout.start || time <= blackout.end;
+  const rows: TimelineRow[] = timeline.map(([time, event]) => ({ time, event, notes: timelineNotes(state, time), blackout: inBlackout(time), derived: false }));
+  if (state.found.includes(1)) rows.splice(rows.findIndex(row => row.time === '00:07'), 0, { time: '00:06', event: 'Hora que marca el reloj detenido del salón.', notes: timelineNotes(state, '00:06'), blackout: true, derived: true });
+  return rows;
+}
+
+// Final accusation: the theory must be right and the chosen evidence must support motive, access and moment without leaning on unattributable clues.
+export type Accusation = { accused: string; event: string; exit: string; evidence: number[] };
+export type Verdict = { ok: boolean; message: string; tone: '' | 'miss' | 'win' };
+const clueTitle = (id: number) => clues.find(clue => clue.id === id)?.title ?? `Prueba ${id}`;
+export function accusationVerdict(answer: Accusation): Verdict {
+  if (!answer.accused || !answer.event || !answer.exit) return { ok: false, tone: '', message: 'Completa las tres partes de la acusación.' };
+  if (answer.evidence.length === 0) return { ok: false, tone: '', message: 'Señala qué pruebas sostienen tu teoría.' };
+  if (!(answer.accused === 'ines' && answer.event === 'fall' && answer.exit === 'side')) return { ok: false, tone: 'miss', message: 'La teoría no encaja con todo el expediente. Revisa quién discutió con Samuel, la naturaleza de la caída y el acceso lateral.' };
+  const weak = answer.evidence.filter(id => id === 2 || id === 3);
+  if (weak.length > 0) return { ok: false, tone: 'miss', message: `${weak.map(clueTitle).join(' y ')}: no se ha podido atribuir a nadie ni relacionar con los hechos. No sostiene la acusación.` };
+  if (!answer.evidence.includes(5)) return { ok: false, tone: 'miss', message: 'Falta el motivo de la cita: el documento de la habitación de Samuel.' };
+  if (!answer.evidence.some(id => id === 4 || id === 6 || id === 7)) return { ok: false, tone: 'miss', message: 'Falta lo que sostiene la huida por el acceso lateral: la fotografía, la humedad o la pieza metálica.' };
+  if (!answer.evidence.includes(1)) return { ok: false, tone: 'miss', message: 'Falta situar los hechos en el apagón: el reloj detenido a las 00:06.' };
+  return { ok: true, tone: 'win', message: 'Acusación correcta. Las pruebas elegidas sostienen el motivo, el acceso y el momento.' };
+}
 export function restore(raw: string | null): GameState {
   try {
     const value = JSON.parse(raw ?? 'null');

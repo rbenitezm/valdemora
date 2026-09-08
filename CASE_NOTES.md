@@ -26,7 +26,7 @@ Los perfiles, secretos y papel de Daniel, Karalee, María Gómez, Inés, Veróni
 
 Entre las declaraciones y la reconstrucción hay una fase de confrontación, que es adaptación. Inés sostiene tres afirmaciones y el jugador debe elegir, entre pruebas y declaraciones ya registradas, la que contradice cada una: Daniel la vio discutir con Samuel; el mensaje a María y el documento doblado muestran que Samuel quería hablar de Valdemora; el recorrido exterior muestra que alguien usó la puerta lateral durante el apagón. Inés admite la discusión y su motivo, coherentes con la resolución original, pero no confiesa: ante la puerta lateral guarda silencio, porque el recorrido exterior sigue sin identificar a nadie. Las opciones descartadas explican por qué no rebaten la afirmación. Las partidas anteriores con la reconstrucción hecha conservan su progreso.
 
-La reconstrucción reproduce la resolución del prototipo original: cita por documentos relativos a Valdemora, discusión, caída fatal y salida de Inés sin pedir ayuda. La acusación requiere elegir a Inés, la caída durante la discusión y la huida por la puerta lateral. Una respuesta incorrecta conserva la partida y permite revisar el expediente.
+La reconstrucción reproduce la resolución del prototipo original: cita por documentos relativos a Valdemora, discusión, caída fatal y salida de Inés sin pedir ayuda. La acusación requiere elegir a Inés, la caída durante la discusión y la huida por la puerta lateral, y además señalar las pruebas que la sostienen: el documento (motivo), al menos una del acceso lateral (fotografía, humedad o pieza) y el reloj (momento). El vaso y la llave no se han podido atribuir a nadie, así que incluirlos invalida la acusación; cada fallo explica qué pilar falta. Una respuesta incorrecta conserva la partida y permite revisar el expediente.
 
 El regalo original de Laura permanece sellado hasta resolver correctamente la acusación. Abrirlo se guarda en la partida. El botón de continuar calcula la siguiente fase pendiente y, tras cerrar el caso, conduce al regalo.
 
@@ -47,6 +47,8 @@ El acceso lateral y los establos usan una inspección en dos pasos. Entrar en la
 Los aciertos y fallos se acompañan de una animación y de un aviso sonoro breve sintetizado con Web Audio (`lib/sound.ts`); no se incluyen archivos de audio. La acusación correcta y la apertura del regalo usan un acorde más largo. El botón de sonido de la cabecera silencia los avisos y la preferencia se guarda en `valdemora-rebuild-sound`. Con `prefers-reduced-motion` las animaciones quedan desactivadas.
 
 Guardado local bajo `valdemora-rebuild-v1`, con validación y recuperación de datos dañados. No migra la clave del prototipo original. Reiniciar requiere confirmación. No se incluye IA en el juego.
+
+La cronología es viva: cada hora recibe anotaciones a medida que el jugador registra pruebas, declaraciones y deducciones, sin añadir hechos. La franja del apagón va de las 23:58 a las 00:09. Cuando se registra el reloj se inserta una fila a las 00:06, marcada como hora aportada por una prueba y no por un testigo. Las notas sobre Django y Ginger transcriben la ficha de los animales.
 
 ## Verificación
 

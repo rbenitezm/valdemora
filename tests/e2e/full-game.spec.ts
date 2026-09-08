@@ -60,6 +60,12 @@ test('a new player can solve the complete case and open the gift', async ({ page
   await page.getByRole('radio', { name: 'Una discusión terminó en una caída fatal.', exact: true }).click();
   await page.getByRole('radio', { name: 'Se marchó por la puerta lateral sin pedir ayuda.', exact: true }).click();
   await page.getByRole('button', { name: 'Confirmar acusación', exact: true }).click();
+  await expect(page.getByText(/Señala qué pruebas/i)).toBeVisible();
+  for (const evidence of [/Vaso de agua/i, /Reloj detenido/i, /documento doblado/i, /Marca de humedad/i]) await page.getByRole('checkbox', { name: evidence }).check();
+  await page.getByRole('button', { name: 'Confirmar acusación', exact: true }).click();
+  await expect(page.getByText(/no se ha podido atribuir/i)).toBeVisible();
+  await page.getByRole('checkbox', { name: /Vaso de agua/i }).uncheck();
+  await page.getByRole('button', { name: 'Confirmar acusación', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Acusación correcta' })).toBeVisible();
   await page.getByRole('button', { name: /Abrir el regalo de Laura/i }).click();
   await page.getByRole('button', { name: 'Abrir el sobre', exact: true }).click();

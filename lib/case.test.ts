@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { advance, initialState, restore, questions, requiredWitnesses, keyWitnesses, confrontationIds, type GameState } from './case.ts';
+import { advance, initialState, restore, questions, requiredWitnesses, keyWitnesses, confrontationIds, livingTimeline, accusationVerdict, type GameState } from './case.ts';
 
 void test('key interviews gate reconstruction and the final resolution', () => {
   const completeInterior: GameState = { version: 1, found: [1, 2, 3, 4, 5, 6, 7], deduction: true, answers: ['sound', 'sight', 'photo'], testimony: true, exterior: true, interior: true, interviews: [], confrontations: [], reconstruction: false, solved: false, giftOpened: false };
@@ -104,4 +104,29 @@ void test('all nine statements are required, but old saves with the four key one
   assert.deepEqual(legacy.confrontations, ['argument']);
   const finished = restore(JSON.stringify({ ...base, interviews: [...keyWitnesses], reconstruction: true, solved: true }));
   assert.equal(finished.solved, true);
+});
+
+void test('the living timeline gains notes with progress and inserts the clock time', () => {
+  const start = livingTimeline(initialState);
+  assert.equal(start.length, 9);
+  assert.equal(start.every(row => row.notes.length === 0), true);
+  assert.deepEqual(start.filter(row => row.blackout).map(row => row.time), ['23:58', '00:00', '00:03', '00:05', '00:07', '00:09']);
+  const later = livingTimeline({ ...initialState, found: [1, 6, 7], testimony: true, interviews: ['daniel'] });
+  assert.equal(later.length, 10);
+  assert.deepEqual(later.map(row => row.time).slice(4, 8), ['00:03', '00:05', '00:06', '00:07']);
+  assert.equal(later.find(row => row.time === '00:06')?.derived, true);
+  assert.equal(later.find(row => row.time === '00:00')?.notes.length, 3);
+  assert.equal(later.find(row => row.time === '23:47')?.notes.length, 1);
+});
+
+void test('the accusation needs the right theory and supporting evidence', () => {
+  const right = { accused: 'ines', event: 'fall', exit: 'side' };
+  assert.equal(accusationVerdict({ ...right, evidence: [] }).tone, '');
+  assert.equal(accusationVerdict({ accused: 'javier', event: 'fall', exit: 'side', evidence: [1, 5, 6] }).tone, 'miss');
+  assert.match(accusationVerdict({ ...right, evidence: [1, 2, 5, 6] }).message, /Vaso de agua/);
+  assert.match(accusationVerdict({ ...right, evidence: [1, 6] }).message, /motivo/);
+  assert.match(accusationVerdict({ ...right, evidence: [1, 5] }).message, /acceso lateral/);
+  assert.match(accusationVerdict({ ...right, evidence: [5, 7] }).message, /reloj/);
+  assert.equal(accusationVerdict({ ...right, evidence: [1, 5, 6] }).ok, true);
+  assert.equal(accusationVerdict({ ...right, evidence: [1, 4, 5, 6, 7] }).ok, true);
 });
