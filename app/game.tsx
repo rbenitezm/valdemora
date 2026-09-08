@@ -40,6 +40,18 @@ const clueImages: Record<number, { src: string; width: number }> = {
   6: { src: '/assets/pistas/06-humedad.jpg', width: 135 },
   7: { src: '/assets/pistas/07-pieza.jpg', width: 103 },
 };
+// Portraits cropped from the original character sheet (personajes.jpg).
+const portraits: Record<string, string> = {
+  daniel: '/assets/retratos/daniel.jpg', karalee: '/assets/retratos/karalee.jpg', maria: '/assets/retratos/maria.jpg', ines: '/assets/retratos/ines.jpg',
+  veronica: '/assets/retratos/veronica.jpg', javier: '/assets/retratos/javier.jpg', alejandra: '/assets/retratos/alejandra.jpg', jhonatan: '/assets/retratos/jhonatan.jpg',
+  jairo: '/assets/retratos/jairo.jpg', hugo: '/assets/retratos/hugo.jpg', samuel: '/assets/retratos/samuel.jpg', inspector: '/assets/retratos/inspector.jpg',
+};
+// `decorative` portraits sit next to text that already names the person, so they add nothing to the accessible name.
+function Portrait({ id, name, size = 'small', decorative = false }: { id: string; name: string; size?: 'small' | 'large'; decorative?: boolean }) {
+  const src = portraits[id];
+  if (!src) return null;
+  return <Image className={`portrait ${size}`} src={assetPath(src)} alt={decorative ? '' : `Retrato original de ${name}`} aria-hidden={decorative || undefined} width={96} height={108} />;
+}
 type Box = { left: string; top: string; width: string; height: string };
 // Areas highlighted on the original house plan and estate map, as percentages of each image.
 const roomBoxes: Record<number, Box> = {
@@ -279,6 +291,7 @@ export default function Home() {
                   </Button>
                 </article>
                 <article className="brief-card note-card">
+                  <Portrait id="inspector" name="Álvaro Mena" />
                   <span className="note-label">Nota del inspector</span>
                   <blockquote>«Una pista aislada puede mentir. Tres que encajan empiezan a contar la verdad.»</blockquote>
                   <small>Inspector Álvaro Mena</small>
@@ -438,9 +451,8 @@ export default function Home() {
           </div>}
           {view === 'personas' && game.interior && <div className="map-view">
             <div className="eyebrow">Fase 04 · Testimonios</div><h1>Todos ocultan algo</h1><p className="lead">Un secreto puede explicar una mentira sin convertirla en asesinato. Registra las declaraciones y decide por ti mismo cuáles afectan a la noche del apagón.</p>
-            <Image className="character-board" src={assetPath('/assets/original/personajes.jpg')} alt="Fichas originales de personajes del caso Valdemora" width={1536} height={1024} sizes="(max-width: 900px) 100vw, 70vw" />
-            <div className="interview-layout"><div className="witness-list" aria-label="Personas disponibles">{witnesses.map(item => <button key={item.id} className={item.id === witness.id ? 'active' : ''} onClick={() => setWitnessId(item.id)}><span>{game.interviews.includes(item.id) ? '✓' : '·'}</span><div><strong>{item.name}</strong><small>{game.interviews.includes(item.id) ? 'Declaración registrada' : 'Pendiente'}</small></div></button>)}</div>
-              <article className="brief-card witness-card"><span>Entrevista · {witness.name}</span><h2>{witness.profile}</h2><p>Pregunta por aquello que no contó al comenzar la investigación.</p>{game.interviews.includes(witness.id) ? <><h3>{witness.secret}</h3><blockquote className="testimony">«{witness.statement}»</blockquote><small>Declaración adaptada a partir de la ficha original.</small></> : <Button className="primary-action" onClick={() => { play('tap'); dispatch({ type: 'interview', id: witness.id }); }}>Registrar declaración</Button>}</article>
+            <div className="interview-layout"><div className="witness-list" aria-label="Personas disponibles">{witnesses.map(item => <button key={item.id} className={item.id === witness.id ? 'active' : ''} onClick={() => setWitnessId(item.id)}><span className="portrait-cell"><Portrait id={item.id} name={item.name} decorative />{game.interviews.includes(item.id) && <i className="portrait-check" aria-hidden="true">✓</i>}</span><div><strong>{item.name}</strong><small>{game.interviews.includes(item.id) ? 'Declaración registrada' : 'Pendiente'}</small></div></button>)}</div>
+              <article className="brief-card witness-card"><Portrait id={witness.id} name={witness.name} size="large" /><span>Entrevista · {witness.name}</span><h2>{witness.profile}</h2><p>Pregunta por aquello que no contó al comenzar la investigación.</p>{game.interviews.includes(witness.id) ? <><h3>{witness.secret}</h3><blockquote className="testimony">«{witness.statement}»</blockquote><small>Declaración adaptada a partir de la ficha original.</small></> : <Button className="primary-action" onClick={() => { play('tap'); dispatch({ type: 'interview', id: witness.id }); }}>Registrar declaración</Button>}</article>
             </div>
             <article className="brief-card interview-progress"><span>Declaraciones registradas</span><h2>{game.interviews.length} / {witnesses.length}</h2>{interviewsDone ? <><p>Inés es la única que niega lo que otros afirman. Confróntala con el expediente antes de ordenar los hechos.</p><Button onClick={() => navigate('confrontacion')}>{confronted ? 'Revisar la confrontación' : 'Confrontar a Inés'} <ArrowRight /></Button></> : <p>Escucha a todas las personas del caso. No todas las mentiras tienen que ver con la muerte de Samuel.</p>}</article>
           </div>}
@@ -451,7 +463,7 @@ export default function Home() {
             {confrontations.map((item, index) => {
               const settled = game.confrontations.includes(item.id);
               if (!settled && item.id !== currentConfrontation?.id) return null;
-              return <article key={item.id} className={`brief-card confrontation ${settled ? 'settled' : ''}`}><span>Afirmación 0{index + 1} · Inés Robles</span><blockquote className="testimony">«{item.claim}»</blockquote>
+              return <article key={item.id} className={`brief-card confrontation ${settled ? 'settled' : ''}`}><Portrait id="ines" name="Inés Robles" size="large" /><span>Afirmación 0{index + 1} · Inés Robles</span><blockquote className="testimony">«{item.claim}»</blockquote>
                 {settled ? <><h3>Respuesta de Inés</h3><blockquote className="testimony reply">«{item.reply}»</blockquote><p>{item.note}</p></> : <><p>¿Qué contradice esta afirmación?</p><div className="question-list">{item.options.map(option => <Button key={option.label} variant="outline" onClick={() => { note(option.message, option.correct ? 'hit' : 'miss'); if (option.correct) dispatch({ type: 'confront', id: item.id }); }}>{option.label}</Button>)}</div></>}
               </article>;
             })}
@@ -465,9 +477,9 @@ export default function Home() {
               <Button variant="outline" onClick={() => { dispatch({ type: 'reconstruct' }); note('Reconstrucción coherente. Ya puedes formular una acusación completa.', 'hit'); }}>Samuel citó a alguien por los documentos; hubo una discusión y una caída, seguida de una huida por el acceso lateral.</Button>
               <Button variant="outline" onClick={() => note('La pieza metálica y la puerta justifican investigar un recorrido, pero no prueban que un intruso desconocido matara a Samuel.', 'miss')}>Un intruso entró desde los establos y atacó a Samuel a las 00:06.</Button>
             </div><Feedback {...feedback} /></article> : <>
-              <article className="brief-card reconstruction"><span>Relato compatible con las pruebas</span><h2>Una discusión, una caída y una decisión</h2><ol><li>Samuel había citado a Inés para hablar de documentos relacionados con Valdemora.</li><li>La conversación se volvió tensa y, durante un forcejeo, Samuel cayó y se golpeó la cabeza.</li><li>El apagón impidió que los demás vieran con claridad lo ocurrido.</li><li>Inés no pidió ayuda y abandonó el lugar por la puerta lateral.</li></ol><p>Esta reconstrucción conserva la resolución del prototipo original. La acusación debe identificar tanto la responsabilidad como la conducta posterior.</p></article>
+              <article className="brief-card reconstruction"><Portrait id="samuel" name="Samuel Valdés" size="large" /><span>Relato compatible con las pruebas</span><h2>Una discusión, una caída y una decisión</h2><ol><li>Samuel había citado a Inés para hablar de documentos relacionados con Valdemora.</li><li>La conversación se volvió tensa y, durante un forcejeo, Samuel cayó y se golpeó la cabeza.</li><li>El apagón impidió que los demás vieran con claridad lo ocurrido.</li><li>Inés no pidió ayuda y abandonó el lugar por la puerta lateral.</li></ol><p>Esta reconstrucción conserva la resolución del prototipo original. La acusación debe identificar tanto la responsabilidad como la conducta posterior.</p></article>
               {!game.solved ? <article className="brief-card accusation"><span>Acusación final</span><h2>Presenta una teoría completa</h2>
-                <fieldset><legend>¿A quién acusas?</legend><RadioGroup name="accused" value={accused} onValueChange={value => setAccused(String(value))}>{[['ines','Inés Robles'],['javier','Javier López'],['veronica','Verónica Benítez'],['maria','María Gómez']].map(([value,label]) => { const id = `accused-${value}`; return <label className="radio-option" htmlFor={id} key={value}><RadioGroupItem id={id} value={value} /><span>{label}</span></label>; })}</RadioGroup></fieldset>
+                <fieldset><legend>¿A quién acusas?</legend><RadioGroup name="accused" value={accused} onValueChange={value => setAccused(String(value))}>{[['ines','Inés Robles'],['javier','Javier López'],['veronica','Verónica Benítez'],['maria','María Gómez']].map(([value,label]) => { const id = `accused-${value}`; return <label className="radio-option" htmlFor={id} key={value}><RadioGroupItem id={id} value={value} /><Portrait id={value} name={label} decorative /><span>{label}</span></label>; })}</RadioGroup></fieldset>
                 <fieldset><legend>¿Qué ocurrió?</legend><RadioGroup name="event-theory" value={eventTheory} onValueChange={value => setEventTheory(String(value))}>{[['fall','Una discusión terminó en una caída fatal.'],['attack','Fue un ataque premeditado durante el apagón.'],['accident','Samuel sufrió un accidente estando solo.']].map(([value,label]) => { const id = `event-${value}`; return <label className="radio-option" htmlFor={id} key={value}><RadioGroupItem id={id} value={value} /><span>{label}</span></label>; })}</RadioGroup></fieldset>
                 <fieldset><legend>¿Qué hizo después?</legend><RadioGroup name="exit-theory" value={exitTheory} onValueChange={value => setExitTheory(String(value))}>{[['side','Se marchó por la puerta lateral sin pedir ayuda.'],['stable','Ocultó las pruebas en los establos.'],['stay','Permaneció con el grupo hasta las 00:17.']].map(([value,label]) => { const id = `exit-${value}`; return <label className="radio-option" htmlFor={id} key={value}><RadioGroupItem id={id} value={value} /><span>{label}</span></label>; })}</RadioGroup></fieldset>
                 <Button className="primary-action" onClick={() => { if (!accused || !eventTheory || !exitTheory) note('Completa las tres partes de la acusación.'); else if (accused === 'ines' && eventTheory === 'fall' && exitTheory === 'side') { dispatch({ type: 'solve' }); note('Acusación correcta.', 'win'); } else note('La teoría no encaja con todo el expediente. Revisa quién discutió con Samuel, la naturaleza de la caída y el acceso lateral.', 'miss'); }}>Confirmar acusación</Button><Feedback {...feedback} />
@@ -501,6 +513,7 @@ export default function Home() {
           </div>}
           {view === 'hugo' && game.deduction && <div className="map-view">
             <div className="eyebrow">Testimonio 01 · El apagón</div><h1>Lo que escuchó Hugo</h1><p className="lead">Separa lo que oyó de lo que pudo ver. Una posibilidad todavía no es una prueba.</p>
+            <div className="witness-banner"><Portrait id="hugo" name="Hugo" size="large" /><div><strong>Hugo</strong><small>Hijo de Verónica y Daniel. Asustadizo y muy enérgico. Importante testigo.</small></div></div>
             <div className="question-list">{questions.map(q => <article className="brief-card" key={q.id}><Button variant="outline" onClick={() => dispatch({ type: 'answer', id: q.id })}>{game.answers.includes(q.id) && <Check />}{q.question}</Button>{game.answers.includes(q.id) && <blockquote className="testimony">«{q.answer}»</blockquote>}</article>)}</div>
             {game.answers.length === questions.length && <article className="brief-card deduction-card"><h2>Un ruido, ninguna identificación</h2><p>Hugo sitúa el sonido metálico a las 00:00, durante el apagón. Su declaración no identifica a nadie ni demuestra que se abriera la puerta.</p><Button disabled={game.testimony} onClick={() => { play('hit'); dispatch({ type: 'testimony' }); }}>{game.testimony ? 'Testimonio registrado' : 'Registrar testimonio'}</Button></article>}
             {game.testimony && <article className="brief-card completion"><span>Primer recorrido completado</span><h2>La siguiente pregunta está en la puerta</h2><p>El acceso lateral y los establos están disponibles. Contrasta las pruebas del exterior con el ruido que escuchó Hugo.</p><Button onClick={() => navigate('acceso')}>Inspeccionar el acceso lateral <ArrowRight /></Button></article>}

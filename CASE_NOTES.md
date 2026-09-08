@@ -34,6 +34,8 @@ La barra superior mantiene visible ese siguiente paso durante toda la partida. L
 
 Las secciones bloqueadas del menú lateral (Hugo, Personas, Conclusión y Regalo) tampoco son controles muertos: al pulsarlas llevan al paso pendiente y muestran un aviso con lo que falta para desbloquearlas. El mapa de la finca marca las cuatro zonas sobre la ilustración original; las bloqueadas se muestran con trazo discontinuo y siguen la misma regla.
 
+Los retratos de las personas del caso son recortes de la ficha gráfica original (`public/assets/retratos`) y acompañan la lista de testigos, la entrevista, la confrontación, la acusación y el testimonio de Hugo. La ficha completa ya no se muestra en Personas porque imprime el secreto de cada personaje y anticipaba el interrogatorio.
+
 Las fotografías de las siete pruebas son recortes del panel original (`public/assets/pistas`) y sólo se muestran cuando la prueba queda registrada. Durante una inspección se muestra el plano o el mapa original con la zona señalada; no existen fotografías de los puntos descartados, así que esas observaciones siguen siendo sólo texto.
 
 La segunda deducción es una adaptación: trata el recorrido exterior como hipótesis compatible con las pruebas. No inventa un encaje físico de la pieza en la puerta, una hora para la humedad ni una identificación. Las partidas anteriores se conservan; las zonas exteriores requieren el testimonio registrado y la segunda deducción exige ambas nuevas pruebas.

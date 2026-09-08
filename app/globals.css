@@ -320,3 +320,19 @@ h1 { margin: 12px 0 16px; font-weight: 400; font-size: clamp(2.2rem, 5vw, 4.7rem
 .confrontation h3 { margin: 22px 0 0; font-weight: 400; }
 .confrontation .reply { border-left-color: #b94435; }
 .confrontation .question-list { margin-top: 18px; }
+
+/* Portraits cropped from the original character sheet. */
+.portrait { display: block; width: 48px; height: auto; aspect-ratio: 12 / 13.5; object-fit: cover; border: 1px solid rgb(232 216 183 / 28%); background: #11120f; }
+.portrait.large { width: 112px; box-shadow: 0 10px 24px rgb(0 0 0 / 35%); }
+.witness-list button { grid-template-columns: 48px 1fr; align-items: center; }
+.portrait-cell { position: relative; display: block; }
+.portrait-check { position: absolute; right: -7px; bottom: -6px; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: #71895c; color: #0d0e0b; font: 700 .7rem/1 ui-sans-serif, system-ui, sans-serif; font-style: normal; }
+.witness-list button.active .portrait { border-color: #c49a57; }
+.witness-card .portrait.large, .confrontation .portrait.large, .reconstruction .portrait.large { float: right; margin: 0 0 14px 20px; }
+.note-card .portrait { position: absolute; top: 16px; right: 18px; width: 60px; border: 3px solid #efe3c8; box-shadow: 0 6px 16px rgb(0 0 0 / 25%); transform: rotate(3deg); }
+.note-card blockquote { margin-right: 76px; }
+.radio-option .portrait { width: 40px; flex: none; }
+.witness-banner { display: flex; gap: 18px; align-items: center; margin: 22px 0 8px; }
+.witness-banner strong { display: block; font-size: 1.2rem; font-weight: 400; }
+.witness-banner small { color: var(--muted-foreground); font: .85rem/1.5 ui-sans-serif, system-ui, sans-serif; }
+@media (max-width: 620px) { .portrait.large { width: 84px; } }
