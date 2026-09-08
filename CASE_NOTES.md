@@ -24,6 +24,8 @@ Los perfiles, secretos y papel de Daniel, Karalee, María Gómez, Inés, Veróni
 
 La reconstrucción reproduce la resolución del prototipo original: cita por documentos relativos a Valdemora, discusión, caída fatal y salida de Inés sin pedir ayuda. La acusación requiere elegir a Inés, la caída durante la discusión y la huida por la puerta lateral. Una respuesta incorrecta conserva la partida y permite revisar el expediente.
 
+El regalo original de Laura permanece sellado hasta resolver correctamente la acusación. Abrirlo se guarda en la partida. El botón de continuar calcula la siguiente fase pendiente y, tras cerrar el caso, conduce al regalo.
+
 La segunda deducción es una adaptación: trata el recorrido exterior como hipótesis compatible con las pruebas. No inventa un encaje físico de la pieza en la puerta, una hora para la humedad ni una identificación. Las partidas anteriores se conservan; las zonas exteriores requieren el testimonio registrado y la segunda deducción exige ambas nuevas pruebas.
 
 Guardado local bajo `valdemora-rebuild-v1`, con validación y recuperación de datos dañados. No migra la clave del prototipo original. Reiniciar requiere confirmación. No se incluye IA en el juego.

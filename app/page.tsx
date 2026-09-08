@@ -18,11 +18,12 @@ import {
   Search,
   Users,
   Gavel,
+  Gift,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
-type View = 'intro' | 'finca' | 'bosque' | 'deducciones' | 'hugo' | 'cronologia' | 'acceso' | 'establos' | 'casa' | 'personas' | 'conclusion';
+type View = 'intro' | 'finca' | 'bosque' | 'deducciones' | 'hugo' | 'cronologia' | 'acceso' | 'establos' | 'casa' | 'personas' | 'conclusion' | 'regalo';
 
 export default function Home() {
   const [view, setView] = useState<View>('intro');
@@ -61,6 +62,20 @@ export default function Home() {
   }, [game, ready]);
   /* oxlint-enable react/react-compiler */
   const navigate = (next: View) => { setView(next); setFeedback(''); };
+  const resumeView = (): View => {
+    if (game.solved) return 'regalo';
+    if (game.reconstruction || requiredWitnesses.every(id => game.interviews.includes(id))) return 'conclusion';
+    if (game.interior) return 'personas';
+    if (game.found.length === 7) return 'deducciones';
+    if (game.exterior) return 'casa';
+    if (game.testimony) {
+      if (![6, 7].every(id => game.found.includes(id))) return game.found.includes(6) ? 'establos' : 'acceso';
+      return 'deducciones';
+    }
+    if (game.deduction) return 'hugo';
+    if (observationFound) return 'deducciones';
+    return 'finca';
+  };
 
   const openMap = () => setView('finca');
 
@@ -112,6 +127,9 @@ export default function Home() {
           <button aria-label="Reconstrucción y acusación" disabled={!requiredWitnesses.every(id => game.interviews.includes(id))} className={view === 'conclusion' ? 'active' : ''} onClick={() => navigate('conclusion')}>
             <Gavel aria-hidden="true" /> Conclusión
           </button>
+          <button aria-label="Regalo de Laura" disabled={!game.solved} className={view === 'regalo' ? 'active' : ''} onClick={() => navigate('regalo')}>
+            <Gift aria-hidden="true" /> Regalo
+          </button>
 
           <div className="case-progress">
             <div>
@@ -157,7 +175,7 @@ export default function Home() {
                   <span>Objetivo inicial</span>
                   <h2>Reconstruir los minutos del apagón</h2>
                   <p>Empieza por el exterior. Observa antes de interpretar y registra sólo lo que puedas demostrar.</p>
-                  <Button className="primary-action" onClick={openMap}>
+                  <Button className="primary-action" onClick={() => navigate(resumeView())}>
                     {observationFound ? 'Continuar investigación' : 'Comenzar investigación'} <ArrowRight aria-hidden="true" />
                   </Button>
                 </article>
@@ -325,7 +343,12 @@ export default function Home() {
                 <fieldset><legend>¿Qué ocurrió?</legend><RadioGroup value={eventTheory} onValueChange={value => setEventTheory(String(value))}>{[['fall','Una discusión terminó en una caída fatal.'],['attack','Fue un ataque premeditado durante el apagón.'],['accident','Samuel sufrió un accidente estando solo.']].map(([value,label]) => <label key={value}><RadioGroupItem value={value} />{label}</label>)}</RadioGroup></fieldset>
                 <fieldset><legend>¿Qué hizo después?</legend><RadioGroup value={exitTheory} onValueChange={value => setExitTheory(String(value))}>{[['side','Se marchó por la puerta lateral sin pedir ayuda.'],['stable','Ocultó las pruebas en los establos.'],['stay','Permaneció con el grupo hasta las 00:17.']].map(([value,label]) => <label key={value}><RadioGroupItem value={value} />{label}</label>)}</RadioGroup></fieldset>
                 <Button className="primary-action" onClick={() => { if (!accused || !eventTheory || !exitTheory) setFeedback('Completa las tres partes de la acusación.'); else if (accused === 'ines' && eventTheory === 'fall' && exitTheory === 'side') { dispatch({ type: 'solve' }); setFeedback('Acusación correcta.'); } else setFeedback('La teoría no encaja con todo el expediente. Revisa quién discutió con Samuel, la naturaleza de la caída y el acceso lateral.'); }}>Confirmar acusación</Button><output>{feedback}</output>
-              </article> : <article className="case-solved"><span>Caso 001 · Cerrado</span><h2>Acusación correcta</h2><p>Has distinguido las mentiras personales de los hechos relevantes y has explicado las siete pruebas sin atribuirles más de lo que demuestran.</p><Button onClick={() => navigate('cronologia')}>Revisar el expediente final</Button></article>}
+              </article> : <article className="case-solved"><span>Caso 001 · Cerrado</span><h2>Acusación correcta</h2><p>Has distinguido las mentiras personales de los hechos relevantes y has explicado las siete pruebas sin atribuirles más de lo que demuestran.</p><div className="final-actions"><Button onClick={() => navigate('regalo')}>Abrir el regalo de Laura <Gift /></Button><Button variant="outline" onClick={() => navigate('cronologia')}>Revisar el expediente</Button></div></article>}
+            </>}
+          </div>}
+          {view === 'regalo' && game.solved && <div className="gift-view">
+            {!game.giftOpened ? <article className="gift-sealed"><Gift aria-hidden="true" /><div className="eyebrow">Una última sorpresa</div><h1>El caso está cerrado.</h1><p>Laura dejó algo para cuando terminara la investigación. La recompensa original de Valdemora está preparada.</p><Button className="primary-action" onClick={() => dispatch({ type: 'gift' })}>Abrir el sobre</Button></article> : <>
+              <div className="eyebrow">Regalo de Laura</div><h1>Una noche diferente en Madrid.</h1><p className="lead">La invitación queda fuera del expediente. Esta parte es sólo para vosotros.</p><div className="gift-ticket"><Image src="/assets/original/regalo-laura.jpg" alt="Invitación de Laura para una experiencia en StreetXO Madrid" width={1536} height={1024} priority sizes="(max-width: 900px) 100vw, 80vw" /></div><div className="final-actions"><Button variant="outline" onClick={() => navigate('conclusion')}>Volver al caso cerrado</Button><Button variant="outline" onClick={() => navigate('intro')}>Volver al inicio</Button></div>
             </>}
           </div>}
           {(view === 'acceso' || view === 'establos') && game.testimony && <div className="map-view">

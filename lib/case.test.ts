@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { advance, initialState, restore, questions, requiredWitnesses, type GameState } from './case.ts';
 
 void test('key interviews gate reconstruction and the final resolution', () => {
-  const completeInterior: GameState = { version: 1, found: [1, 2, 3, 4, 5, 6, 7], deduction: true, answers: ['sound', 'sight', 'photo'], testimony: true, exterior: true, interior: true, interviews: [], reconstruction: false, solved: false };
+  const completeInterior: GameState = { version: 1, found: [1, 2, 3, 4, 5, 6, 7], deduction: true, answers: ['sound', 'sight', 'photo'], testimony: true, exterior: true, interior: true, interviews: [], reconstruction: false, solved: false, giftOpened: false };
   assert.deepEqual(advance(completeInterior, { type: 'reconstruct' }), completeInterior);
   let state = completeInterior;
   for (const id of requiredWitnesses.slice(0, -1)) state = advance(state, { type: 'interview', id });
@@ -13,8 +13,11 @@ void test('key interviews gate reconstruction and the final resolution', () => {
   assert.equal(state.reconstruction, true);
   state = advance(state, { type: 'solve' });
   assert.equal(state.solved, true);
+  state = advance(state, { type: 'gift' });
+  assert.equal(state.giftOpened, true);
   assert.deepEqual(restore(JSON.stringify(state)), state);
   assert.equal(restore(JSON.stringify({ ...state, reconstruction: false })).solved, false);
+  assert.equal(restore(JSON.stringify({ ...state, solved: false })).giftOpened, false);
 });
 
 void test('interior unlocks after exterior and survives reload with all seven clues', () => {

@@ -38,9 +38,9 @@ export const witnesses = [
   { id: 'jairo', name: 'Jairo Varela', profile: 'Tranquilo, lee y observa con paciencia.', secret: 'Se separó de Daniel durante unos minutos.', essential: false, statement: 'Me separé de Daniel unos minutos. Estaba solo y por eso no tengo quién confirme mi recorrido.' },
 ] as const;
 export const requiredWitnesses = witnesses.filter(witness => witness.essential).map(witness => witness.id);
-export type GameState = { version: 1; found: number[]; deduction: boolean; answers: string[]; testimony: boolean; exterior: boolean; interior: boolean; interviews: string[]; reconstruction: boolean; solved: boolean };
-export const initialState: GameState = { version: 1, found: [], deduction: false, answers: [], testimony: false, exterior: false, interior: false, interviews: [], reconstruction: false, solved: false };
-export type Action = { type: 'discover'; id?: 1 | 2 | 3 | 4 | 5 | 6 | 7 } | { type: 'deduce' } | { type: 'answer'; id: string } | { type: 'testimony' } | { type: 'exterior' } | { type: 'interior' } | { type: 'interview'; id: string } | { type: 'reconstruct' } | { type: 'solve' };
+export type GameState = { version: 1; found: number[]; deduction: boolean; answers: string[]; testimony: boolean; exterior: boolean; interior: boolean; interviews: string[]; reconstruction: boolean; solved: boolean; giftOpened: boolean };
+export const initialState: GameState = { version: 1, found: [], deduction: false, answers: [], testimony: false, exterior: false, interior: false, interviews: [], reconstruction: false, solved: false, giftOpened: false };
+export type Action = { type: 'discover'; id?: 1 | 2 | 3 | 4 | 5 | 6 | 7 } | { type: 'deduce' } | { type: 'answer'; id: string } | { type: 'testimony' } | { type: 'exterior' } | { type: 'interior' } | { type: 'interview'; id: string } | { type: 'reconstruct' } | { type: 'solve' } | { type: 'gift' };
 export function advance(state: GameState, action: Action): GameState {
   if (action.type === 'discover') {
     const id = action.id ?? 4;
@@ -53,6 +53,7 @@ export function advance(state: GameState, action: Action): GameState {
   if (action.type === 'interview' && state.interior && witnesses.some(witness => witness.id === action.id)) return { ...state, interviews: [...new Set([...state.interviews, action.id])] };
   if (action.type === 'reconstruct' && state.interior && requiredWitnesses.every(id => state.interviews.includes(id))) return { ...state, reconstruction: true };
   if (action.type === 'solve' && state.reconstruction) return { ...state, solved: true };
+  if (action.type === 'gift' && state.solved) return { ...state, giftOpened: true };
   if (action.type === 'deduce' && state.found.includes(4)) return { ...state, deduction: true };
   if (action.type === 'answer' && state.deduction && questions.some(q => q.id === action.id)) return { ...state, answers: [...new Set([...state.answers, action.id])] };
   if (action.type === 'testimony' && questions.every(q => state.answers.includes(q.id))) return { ...state, testimony: true };
@@ -73,6 +74,7 @@ export function restore(raw: string | null): GameState {
     const interior = exterior && found.length === 7 && value.interior === true;
     const interviews = interior && Array.isArray(value.interviews) ? witnesses.filter(witness => value.interviews.includes(witness.id)).map(witness => witness.id) : [];
     const reconstruction = interior && requiredWitnesses.every(id => interviews.includes(id)) && value.reconstruction === true;
-    return { version: 1, found, deduction, answers, testimony, exterior, interior, interviews, reconstruction, solved: reconstruction && value.solved === true };
+    const solved = reconstruction && value.solved === true;
+    return { version: 1, found, deduction, answers, testimony, exterior, interior, interviews, reconstruction, solved, giftOpened: solved && value.giftOpened === true };
   } catch { return initialState; }
 }
