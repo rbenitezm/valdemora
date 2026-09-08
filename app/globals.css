@@ -309,3 +309,14 @@ h1 { margin: 12px 0 16px; font-weight: 400; font-size: clamp(2.2rem, 5vw, 4.7rem
 @keyframes rise-in { 0% { opacity: 0; transform: translateY(10px); } 100% { opacity: 1; transform: none; } }
 .question-list button:active { transform: scale(.985); }
 @media (max-width: 620px) { .case-tools { gap: 8px; } .sound-toggle { width: 30px; height: 30px; } }
+
+/* Confrontation phase. */
+.confrontation-progress { display: flex; gap: 10px; margin: 22px 0 4px; }
+.confrontation-progress span { width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid rgb(196 154 87 / 30%); color: #776b58; font: .7rem/1 ui-sans-serif, system-ui, sans-serif; letter-spacing: .08em; }
+.confrontation-progress span.current { border-color: #c49a57; color: #f1e4ca; background: rgb(196 154 87 / 10%); }
+.confrontation-progress span.done { border-color: #71895c; color: #cbd9bd; }
+.confrontation { margin-top: 22px; animation: rise-in .55s ease-out; }
+.confrontation.settled { opacity: .85; }
+.confrontation h3 { margin: 22px 0 0; font-weight: 400; }
+.confrontation .reply { border-left-color: #b94435; }
+.confrontation .question-list { margin-top: 18px; }

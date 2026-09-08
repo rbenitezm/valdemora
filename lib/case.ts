@@ -53,10 +53,33 @@ export const witnesses = [
   { id: 'jhonatan', name: 'Jhonatan Vaca', profile: 'Bombero con experiencia en emergencias.', secret: 'Dejó una puerta entreabierta.', essential: false, statement: 'Dejé una puerta entreabierta al salir. Lo oculté porque parecía irresponsable, pero fue antes de que empezara el apagón.' },
   { id: 'jairo', name: 'Jairo Varela', profile: 'Tranquilo, lee y observa con paciencia.', secret: 'Se separó de Daniel durante unos minutos.', essential: false, statement: 'Me separé de Daniel unos minutos. Estaba solo y por eso no tengo quién confirme mi recorrido.' },
 ] as const;
+// Confrontation of Inés's statement with evidence already in the file. Her replies are an adaptation:
+// she admits the argument and its subject (the original resolution) but never confesses, and the exterior route still identifies nobody.
+export const confrontations = [
+  { id: 'argument', claim: 'Oí voces desde fuera, nada más. Yo no hablé con Samuel aquella noche.', reply: 'Está bien. Hablé con Samuel y discutimos. Eso no significa nada más.', note: 'Inés admite la discusión que Daniel presenció.', options: [
+    { label: 'Declaración de Daniel: vio a Samuel discutiendo con Inés antes del apagón.', message: 'Daniel la sitúa discutiendo con Samuel, no escuchando desde fuera. La afirmación no se sostiene.', correct: true },
+    { label: 'Declaración de Karalee: una silueta hacia la zona de servicio.', message: 'Karalee no reconoció a nadie. Su declaración no sitúa a Inés con Samuel.', correct: false },
+    { label: 'Vaso de agua sin terminar en el comedor.', message: 'El vaso no puede atribuirse a ninguna persona.', correct: false },
+    { label: 'Reloj detenido a las 00:06.', message: 'El reloj marca una hora; no dice quién estaba con Samuel.', correct: false },
+  ] },
+  { id: 'documents', claim: 'No sé de qué quería hablar Samuel. Fue una conversación sin importancia.', reply: 'Unos papeles. Samuel decía que había cosas de Valdemora que debían aclararse. Discutimos por eso y después me fui.', note: 'Inés reconoce el motivo de la discusión: los documentos relativos a Valdemora.', options: [
+    { label: 'Mensaje a María y documento doblado: Samuel quería hablar sobre Valdemora.', message: 'Samuel había anunciado el tema y guardaba un documento en su habitación. La conversación no era casual.', correct: true },
+    { label: 'Fotografía antigua de Valdemora.', message: 'La fotografía muestra un acceso, no el tema de una conversación.', correct: false },
+    { label: 'Declaración de Jairo: se separó de Daniel unos minutos.', message: 'Que Jairo estuviera solo no explica de qué hablaba Samuel.', correct: false },
+    { label: 'Pequeña llave encontrada en el pasillo.', message: 'Todavía no sabes qué abre la llave ni a quién pertenece.', correct: false },
+  ] },
+  { id: 'exit', claim: 'Me marché antes del apagón y no utilicé ninguna puerta lateral.', reply: 'No tengo nada más que decir.', note: 'Inés no responde. El recorrido exterior sigue sin identificar a una persona; eres tú quien debe decidir si su versión se sostiene.', options: [
+    { label: 'Recorrido exterior: silueta hacia el servicio, ruido metálico a las 00:00 y humedad junto a la puerta lateral.', message: 'Alguien utilizó el acceso lateral durante el apagón. Inés ya ha cambiado su versión dos veces.', correct: true },
+    { label: 'Declaración de Jhonatan: dejó una puerta entreabierta.', message: 'Jhonatan lo hizo antes del apagón y no vio a nadie utilizarla.', correct: false },
+    { label: 'Declaración de Verónica: Samuel conocía un asunto privado suyo.', message: 'El secreto de Verónica no está relacionado con Valdemora ni con la puerta.', correct: false },
+    { label: 'Reloj detenido a las 00:06.', message: 'La hora cae dentro del apagón, pero no sitúa a Inés en la casa.', correct: false },
+  ] },
+] as const;
+export const confrontationIds = confrontations.map(item => item.id);
 export const requiredWitnesses = witnesses.filter(witness => witness.essential).map(witness => witness.id);
-export type GameState = { version: 1; found: number[]; deduction: boolean; answers: string[]; testimony: boolean; exterior: boolean; interior: boolean; interviews: string[]; reconstruction: boolean; solved: boolean; giftOpened: boolean };
-export const initialState: GameState = { version: 1, found: [], deduction: false, answers: [], testimony: false, exterior: false, interior: false, interviews: [], reconstruction: false, solved: false, giftOpened: false };
-export type Action = { type: 'discover'; id?: 1 | 2 | 3 | 4 | 5 | 6 | 7 } | { type: 'deduce' } | { type: 'answer'; id: string } | { type: 'testimony' } | { type: 'exterior' } | { type: 'interior' } | { type: 'interview'; id: string } | { type: 'reconstruct' } | { type: 'solve' } | { type: 'gift' };
+export type GameState = { version: 1; found: number[]; deduction: boolean; answers: string[]; testimony: boolean; exterior: boolean; interior: boolean; interviews: string[]; confrontations: string[]; reconstruction: boolean; solved: boolean; giftOpened: boolean };
+export const initialState: GameState = { version: 1, found: [], deduction: false, answers: [], testimony: false, exterior: false, interior: false, interviews: [], confrontations: [], reconstruction: false, solved: false, giftOpened: false };
+export type Action = { type: 'discover'; id?: 1 | 2 | 3 | 4 | 5 | 6 | 7 } | { type: 'deduce' } | { type: 'answer'; id: string } | { type: 'testimony' } | { type: 'exterior' } | { type: 'interior' } | { type: 'interview'; id: string } | { type: 'confront'; id: string } | { type: 'reconstruct' } | { type: 'solve' } | { type: 'gift' };
 export function advance(state: GameState, action: Action): GameState {
   if (action.type === 'discover') {
     const id = action.id ?? 4;
@@ -67,7 +90,8 @@ export function advance(state: GameState, action: Action): GameState {
   if (action.type === 'exterior' && state.testimony && [4, 6, 7].every(id => state.found.includes(id))) return { ...state, exterior: true };
   if (action.type === 'interior' && state.exterior && clues.every(clue => state.found.includes(clue.id))) return { ...state, interior: true };
   if (action.type === 'interview' && state.interior && witnesses.some(witness => witness.id === action.id)) return { ...state, interviews: [...new Set([...state.interviews, action.id])] };
-  if (action.type === 'reconstruct' && state.interior && requiredWitnesses.every(id => state.interviews.includes(id))) return { ...state, reconstruction: true };
+  if (action.type === 'confront' && state.interior && requiredWitnesses.every(id => state.interviews.includes(id)) && confrontationIds.includes(action.id as typeof confrontationIds[number])) return { ...state, confrontations: [...new Set([...state.confrontations, action.id])] };
+  if (action.type === 'reconstruct' && state.interior && confrontationIds.every(id => state.confrontations.includes(id))) return { ...state, reconstruction: true };
   if (action.type === 'solve' && state.reconstruction) return { ...state, solved: true };
   if (action.type === 'gift' && state.solved) return { ...state, giftOpened: true };
   if (action.type === 'deduce' && state.found.includes(4)) return { ...state, deduction: true };
@@ -89,8 +113,11 @@ export function restore(raw: string | null): GameState {
     found.sort((a, b) => a - b);
     const interior = exterior && found.length === 7 && value.interior === true;
     const interviews = interior && Array.isArray(value.interviews) ? witnesses.filter(witness => value.interviews.includes(witness.id)).map(witness => witness.id) : [];
-    const reconstruction = interior && requiredWitnesses.every(id => interviews.includes(id)) && value.reconstruction === true;
+    const interviewed = interior && requiredWitnesses.every(id => interviews.includes(id));
+    // Saves from before the confrontation phase keep a finished reconstruction: treat them as fully confronted.
+    const confronted: string[] = !interviewed ? [] : Array.isArray(value.confrontations) ? confrontationIds.filter(id => value.confrontations.includes(id)) : value.reconstruction === true ? [...confrontationIds] : [];
+    const reconstruction = interviewed && confronted.length === confrontationIds.length && value.reconstruction === true;
     const solved = reconstruction && value.solved === true;
-    return { version: 1, found, deduction, answers, testimony, exterior, interior, interviews, reconstruction, solved, giftOpened: solved && value.giftOpened === true };
+    return { version: 1, found, deduction, answers, testimony, exterior, interior, interviews, confrontations: confronted, reconstruction, solved, giftOpened: solved && value.giftOpened === true };
   } catch { return initialState; }
 }

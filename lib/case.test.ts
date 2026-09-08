@@ -1,14 +1,20 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { advance, initialState, restore, questions, requiredWitnesses, type GameState } from './case.ts';
+import { advance, initialState, restore, questions, requiredWitnesses, confrontationIds, type GameState } from './case.ts';
 
 void test('key interviews gate reconstruction and the final resolution', () => {
-  const completeInterior: GameState = { version: 1, found: [1, 2, 3, 4, 5, 6, 7], deduction: true, answers: ['sound', 'sight', 'photo'], testimony: true, exterior: true, interior: true, interviews: [], reconstruction: false, solved: false, giftOpened: false };
+  const completeInterior: GameState = { version: 1, found: [1, 2, 3, 4, 5, 6, 7], deduction: true, answers: ['sound', 'sight', 'photo'], testimony: true, exterior: true, interior: true, interviews: [], confrontations: [], reconstruction: false, solved: false, giftOpened: false };
   assert.deepEqual(advance(completeInterior, { type: 'reconstruct' }), completeInterior);
+  assert.deepEqual(advance(completeInterior, { type: 'confront', id: 'argument' }), completeInterior);
   let state = completeInterior;
   for (const id of requiredWitnesses.slice(0, -1)) state = advance(state, { type: 'interview', id });
   assert.equal(advance(state, { type: 'reconstruct' }).reconstruction, false);
   state = advance(state, { type: 'interview', id: requiredWitnesses.at(-1)! });
+  assert.equal(advance(state, { type: 'reconstruct' }).reconstruction, false);
+  assert.deepEqual(advance(state, { type: 'confront', id: 'unknown' }), state);
+  for (const id of confrontationIds) state = advance(state, { type: 'confront', id });
+  state = advance(state, { type: 'confront', id: confrontationIds[0] });
+  assert.deepEqual(state.confrontations, [...confrontationIds]);
   state = advance(state, { type: 'reconstruct' });
   assert.equal(state.reconstruction, true);
   state = advance(state, { type: 'solve' });
@@ -75,4 +81,16 @@ void test('exterior requires testimony and both clues, preserves old saves and r
   assert.equal(state.exterior, true);
   assert.deepEqual(restore(JSON.stringify(state)), state);
   assert.deepEqual(restore(JSON.stringify({ version: 1, found: [6, 7], testimony: true, exterior: true })), initialState);
+});
+
+void test('confrontations gate the reconstruction and old saves keep their progress', () => {
+  const interviewed = { version: 1, found: [1, 2, 3, 4, 5, 6, 7], deduction: true, answers: ['sound', 'sight', 'photo'], testimony: true, exterior: true, interior: true, interviews: [...requiredWitnesses] };
+  let state = restore(JSON.stringify({ ...interviewed, confrontations: ['argument', 'bogus'], reconstruction: true }));
+  assert.deepEqual(state.confrontations, ['argument']);
+  assert.equal(state.reconstruction, false);
+  state = restore(JSON.stringify({ ...interviewed, reconstruction: true, solved: true }));
+  assert.deepEqual(state.confrontations, [...confrontationIds]);
+  assert.equal(state.solved, true);
+  state = restore(JSON.stringify({ ...interviewed, interviews: ['daniel'], confrontations: [...confrontationIds] }));
+  assert.deepEqual(state.confrontations, []);
 });

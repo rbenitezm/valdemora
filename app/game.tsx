@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { advance, initialState, restore, clues, timeline, questions, rooms, witnesses, requiredWitnesses, type Action } from '@/lib/case';
+import { advance, initialState, restore, clues, timeline, questions, rooms, witnesses, requiredWitnesses, confrontations, type Action } from '@/lib/case';
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import Image from 'next/image';
@@ -27,7 +27,7 @@ import { play, setMuted } from '@/lib/sound';
 
 import { Button } from '@/components/ui/button';
 
-type View = 'intro' | 'finca' | 'bosque' | 'deducciones' | 'hugo' | 'cronologia' | 'acceso' | 'establos' | 'casa' | 'personas' | 'conclusion' | 'regalo';
+type View = 'intro' | 'finca' | 'bosque' | 'deducciones' | 'hugo' | 'cronologia' | 'acceso' | 'establos' | 'casa' | 'personas' | 'confrontacion' | 'conclusion' | 'regalo';
 
 const assetPath = (path: string) => `${process.env.NEXT_PUBLIC_BASE_PATH ?? ''}${path}`;
 // Photographs cropped from the original evidence panel (panel-pistas.jpg).
@@ -102,10 +102,14 @@ export default function Home() {
   ];
   const pendingRooms = rooms.filter(item => !game.found.includes(item.id)).length;
   const pendingInterviews = requiredWitnesses.filter(id => !game.interviews.includes(id)).length;
+  const interviewsDone = game.interior && pendingInterviews === 0;
+  const pendingConfrontations = confrontations.filter(item => !game.confrontations.includes(item.id)).length;
+  const confronted = interviewsDone && pendingConfrontations === 0;
+  const currentConfrontation = confrontations.find(item => !game.confrontations.includes(item.id));
   const sectionLocks = {
     hugo: !observationFound ? 'Para interrogar a Hugo, examina primero la fotografía antigua en el bosque norte.' : 'Para interrogar a Hugo, resuelve la deducción de la fotografía en Deducciones.',
     personas: !game.exterior ? 'Las personas del caso se desbloquean tras reunir las siete pruebas y resolver la deducción del reloj. Completa antes el recorrido exterior.' : pendingRooms > 0 ? `Las personas del caso se desbloquean tras reunir las siete pruebas y resolver la deducción del reloj. Faltan ${pendingRooms} pruebas de la casa.` : 'Las personas del caso se desbloquean al resolver la deducción del reloj en Deducciones.',
-    conclusion: !game.interior ? 'La conclusión requiere las siete pruebas, la deducción del reloj y las cuatro declaraciones clave.' : `La conclusión se abre al registrar las cuatro declaraciones clave. Faltan ${pendingInterviews}, marcadas con «!» en Personas.`,
+    conclusion: !game.interior ? 'La conclusión requiere las siete pruebas, la deducción del reloj y las cuatro declaraciones clave.' : pendingInterviews > 0 ? `La conclusión se abre al registrar las cuatro declaraciones clave. Faltan ${pendingInterviews}, marcadas con «!» en Personas.` : `La conclusión se abre tras confrontar a Inés con el expediente. Quedan ${pendingConfrontations} afirmaciones por rebatir.`,
     regalo: 'El regalo de Laura se abre al resolver correctamente la acusación final.',
   };
   const dispatch = (action: Action) => setGame(current => advance(current, action));
@@ -137,7 +141,8 @@ export default function Home() {
   const navigate = (next: View) => { setView(next); setFeedback(silentFeedback); setNotice(''); setExteriorSearch(null); setRoomSearch(null); };
   const resumeView = (): View => {
     if (game.solved) return 'regalo';
-    if (game.reconstruction || requiredWitnesses.every(id => game.interviews.includes(id))) return 'conclusion';
+    if (game.reconstruction || confronted) return 'conclusion';
+    if (interviewsDone) return 'confrontacion';
     if (game.interior) return 'personas';
     if (game.found.length === 7) return 'deducciones';
     if (game.exterior) return 'casa';
@@ -151,7 +156,8 @@ export default function Home() {
   };
   const nextStepLabel = () => {
     if (game.solved) return 'Ver regalo';
-    if (game.reconstruction || requiredWitnesses.every(id => game.interviews.includes(id))) return 'Ir a la conclusión';
+    if (game.reconstruction || confronted) return 'Ir a la conclusión';
+    if (interviewsDone) return 'Confrontar a Inés';
     if (game.interior) return 'Continuar testimonios';
     if (game.found.length === 7) return 'Resolver deducción interior';
     if (game.exterior) return 'Entrar en la casa';
@@ -213,11 +219,11 @@ export default function Home() {
           <button aria-label="Interrogar a Hugo" aria-disabled={!game.deduction} title={game.deduction ? undefined : sectionLocks.hugo} className={`${view === 'hugo' ? 'active' : ''} ${game.deduction ? '' : 'locked'}`} onClick={() => game.deduction ? navigate('hugo') : goToPending(sectionLocks.hugo)}>
             <FileText aria-hidden="true" /> Hugo {!game.deduction && <span className="lock-dot" aria-hidden="true" />}
           </button>
-          <button aria-label="Personas del caso" aria-disabled={!game.interior} title={game.interior ? undefined : sectionLocks.personas} className={`${view === 'personas' ? 'active' : ''} ${game.interior ? '' : 'locked'}`} onClick={() => game.interior ? navigate('personas') : goToPending(sectionLocks.personas)}>
+          <button aria-label="Personas del caso" aria-disabled={!game.interior} title={game.interior ? undefined : sectionLocks.personas} className={`${view === 'personas' || view === 'confrontacion' ? 'active' : ''} ${game.interior ? '' : 'locked'}`} onClick={() => game.interior ? navigate('personas') : goToPending(sectionLocks.personas)}>
             <Users aria-hidden="true" /> Personas {!game.interior && <span className="lock-dot" aria-hidden="true" />}
           </button>
-          <button aria-label="Reconstrucción y acusación" aria-disabled={pendingInterviews > 0} title={pendingInterviews > 0 ? sectionLocks.conclusion : undefined} className={`${view === 'conclusion' ? 'active' : ''} ${pendingInterviews > 0 ? 'locked' : ''}`} onClick={() => pendingInterviews === 0 ? navigate('conclusion') : goToPending(sectionLocks.conclusion)}>
-            <Gavel aria-hidden="true" /> Conclusión {pendingInterviews > 0 && <span className="lock-dot" aria-hidden="true" />}
+          <button aria-label="Reconstrucción y acusación" aria-disabled={!confronted} title={confronted ? undefined : sectionLocks.conclusion} className={`${view === 'conclusion' ? 'active' : ''} ${confronted ? '' : 'locked'}`} onClick={() => confronted ? navigate('conclusion') : goToPending(sectionLocks.conclusion)}>
+            <Gavel aria-hidden="true" /> Conclusión {!confronted && <span className="lock-dot" aria-hidden="true" />}
           </button>
           <button aria-label="Regalo de Laura" aria-disabled={!game.solved} title={game.solved ? undefined : sectionLocks.regalo} className={`${view === 'regalo' ? 'active' : ''} ${game.solved ? '' : 'locked'}`} onClick={() => game.solved ? navigate('regalo') : goToPending(sectionLocks.regalo)}>
             <Gift aria-hidden="true" /> Regalo {!game.solved && <span className="lock-dot" aria-hidden="true" />}
@@ -436,9 +442,23 @@ export default function Home() {
             <div className="interview-layout"><div className="witness-list" aria-label="Personas disponibles">{witnesses.map(item => <button key={item.id} className={item.id === witness.id ? 'active' : ''} onClick={() => setWitnessId(item.id)}><span>{game.interviews.includes(item.id) ? '✓' : item.essential ? '!' : '·'}</span><div><strong>{item.name}</strong><small>{item.essential ? 'Declaración clave' : 'Declaración adicional'}</small></div></button>)}</div>
               <article className="brief-card witness-card"><span>Entrevista · {witness.name}</span><h2>{witness.profile}</h2><p>Pregunta por aquello que no contó al comenzar la investigación.</p>{game.interviews.includes(witness.id) ? <><h3>{witness.secret}</h3><blockquote className="testimony">«{witness.statement}»</blockquote><small>Declaración adaptada a partir de la ficha original.</small></> : <Button className="primary-action" onClick={() => { play('tap'); dispatch({ type: 'interview', id: witness.id }); }}>Registrar declaración</Button>}</article>
             </div>
-            <article className="brief-card interview-progress"><span>Declaraciones clave</span><h2>{requiredWitnesses.filter(id => game.interviews.includes(id)).length} / {requiredWitnesses.length}</h2>{requiredWitnesses.every(id => game.interviews.includes(id)) ? <><p>Ya puedes ordenar los hechos sin confundir los secretos personales con la responsabilidad por la muerte.</p><Button onClick={() => navigate('conclusion')}>Reconstruir la noche <ArrowRight /></Button></> : <p>Busca las fichas marcadas con un signo de exclamación.</p>}</article>
+            <article className="brief-card interview-progress"><span>Declaraciones clave</span><h2>{requiredWitnesses.filter(id => game.interviews.includes(id)).length} / {requiredWitnesses.length}</h2>{interviewsDone ? <><p>Inés es la única que niega lo que otros afirman. Confróntala con el expediente antes de ordenar los hechos.</p><Button onClick={() => navigate('confrontacion')}>{confronted ? 'Revisar la confrontación' : 'Confrontar a Inés'} <ArrowRight /></Button></> : <p>Busca las fichas marcadas con un signo de exclamación.</p>}</article>
           </div>}
-          {view === 'conclusion' && game.interior && requiredWitnesses.every(id => game.interviews.includes(id)) && <div className="map-view">
+          {view === 'confrontacion' && interviewsDone && <div className="map-view">
+            <Button variant="outline" className="quiet-action" onClick={() => navigate('personas')}><ArrowLeft /> Personas del caso</Button>
+            <div className="eyebrow exterior-heading">Fase 05 · Confrontación</div><h1>La versión de Inés</h1><p className="lead">Inés Robles sostiene tres afirmaciones. Para cada una, elige la prueba o declaración del expediente que la contradice. Esto no la acusa todavía: sólo pone a prueba su relato.</p>
+            <div className="confrontation-progress" aria-label="Afirmaciones rebatidas">{confrontations.map((item, index) => <span key={item.id} className={game.confrontations.includes(item.id) ? 'done' : item.id === currentConfrontation?.id ? 'current' : ''}>0{index + 1}</span>)}</div>
+            {confrontations.map((item, index) => {
+              const settled = game.confrontations.includes(item.id);
+              if (!settled && item.id !== currentConfrontation?.id) return null;
+              return <article key={item.id} className={`brief-card confrontation ${settled ? 'settled' : ''}`}><span>Afirmación 0{index + 1} · Inés Robles</span><blockquote className="testimony">«{item.claim}»</blockquote>
+                {settled ? <><h3>Respuesta de Inés</h3><blockquote className="testimony reply">«{item.reply}»</blockquote><p>{item.note}</p></> : <><p>¿Qué contradice esta afirmación?</p><div className="question-list">{item.options.map(option => <Button key={option.label} variant="outline" onClick={() => { note(option.message, option.correct ? 'hit' : 'miss'); if (option.correct) dispatch({ type: 'confront', id: item.id }); }}>{option.label}</Button>)}</div></>}
+              </article>;
+            })}
+            <Feedback {...feedback} className="inspection-feedback" />
+            {confronted && <article className="brief-card completion"><span>Confrontación completada</span><h2>El relato de Inés ha cambiado dos veces</h2><p>Admitió la discusión y su motivo, y guardó silencio sobre la puerta lateral. Ahora te corresponde ordenar los hechos con las siete pruebas, los horarios y las declaraciones.</p><Button onClick={() => navigate('conclusion')}>Reconstruir la noche <ArrowRight /></Button></article>}
+          </div>}
+          {view === 'conclusion' && confronted && <div className="map-view">
             <div className="eyebrow">Fases 06 y 07 · La verdad</div><h1>Reconstrucción del caso</h1><p className="lead">Ordena únicamente lo que encaja con las siete pruebas, los horarios y las declaraciones.</p>
             {!game.reconstruction ? <article className="brief-card deduction-card"><h2>¿Qué relato explica mejor el conjunto?</h2><div className="question-list">
               <Button variant="outline" onClick={() => note('La hora del reloj no basta para demostrar un plan previo, y varias mentiras tienen motivos personales.', 'miss')}>Javier planeó la muerte y preparó el apagón para ocultarla.</Button>

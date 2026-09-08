@@ -48,6 +48,11 @@ test('a new player can solve the complete case and open the gift', async ({ page
     await page.getByRole('button', { name: new RegExp(witness) }).click();
     await page.getByRole('button', { name: 'Registrar declaración', exact: true }).click();
   }
+  await page.getByRole('button', { name: /Confrontar a Inés/i }).first().click();
+  await page.getByRole('button', { name: /Vaso de agua sin terminar/i }).click();
+  await expect(page.getByText(/no puede atribuirse a ninguna persona/i)).toBeVisible();
+  for (const evidence of [/Declaración de Daniel/i, /Mensaje a María/i, /Recorrido exterior/i]) await page.getByRole('button', { name: evidence }).click();
+  await expect(page.getByRole('heading', { name: /ha cambiado dos veces/i })).toBeVisible();
   await page.getByRole('button', { name: /Reconstruir la noche/i }).click();
   await page.getByRole('button', { name: /Samuel citó a alguien por los documentos/i }).click();
 
