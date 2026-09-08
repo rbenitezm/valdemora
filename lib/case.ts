@@ -21,10 +21,26 @@ export const questions = [
   { id: 'photo', question: 'Esta fotografía muestra otro acceso. ¿El ruido prueba que se utilizó?', answer: 'Podría estar relacionado, pero no lo sé. Tendríais que examinar la puerta y averiguar qué pudo hacer ese sonido.' },
 ] as const;
 export const rooms = [
-  { id: 1, name: 'Salón', title: 'Las agujas inmóviles', description: 'Un reloj detenido marca las 00:06. Registra la lectura antes de compararla con los acontecimientos de la noche.', caution: 'La hora que muestra no demuestra por sí sola cuándo ni por qué se detuvo.' },
-  { id: 2, name: 'Cocina / Comedor', title: 'El vaso sin terminar', description: 'Queda agua en un vaso. Examínalo y anota su presencia en el comedor.', caution: 'Sin más información no puedes atribuir el vaso a una persona ni afirmar qué contiene además de agua.' },
-  { id: 3, name: 'Pasillo', title: 'Una llave pequeña', description: 'Encuentras una pequeña llave en el pasillo. Regístrala entre los objetos de la investigación.', caution: 'Todavía no has comprobado qué cerradura abre ni a quién pertenece.' },
-  { id: 5, name: 'Habitación de Samuel', title: 'El documento doblado', description: 'Un documento doblado merece quedar registrado. Su relación con Samuel abre una nueva línea de investigación.', caution: 'Antes de atribuirle un motivo a alguien, habrá que esclarecer el contenido y la procedencia del documento.' },
+  { id: 1, name: 'Salón', title: 'El salón en silencio', description: 'La estancia quedó como estaba al terminar la noche. Recorre sus puntos principales antes de interpretar nada.', caution: 'La hora que muestra no demuestra por sí sola cuándo ni por qué se detuvo.', spots: [
+    { label: 'La chimenea', message: 'Hay ceniza fría, pero nada permite relacionarla con los hechos.', correct: false },
+    { label: 'La mesa central', message: 'Los objetos de la mesa no aportan una observación verificable al caso.', correct: false },
+    { label: 'El reloj de pared', message: 'Las agujas están detenidas a las 00:06. La lectura queda registrada.', correct: true },
+  ] },
+  { id: 2, name: 'Cocina / Comedor', title: 'La mesa después de la cena', description: 'Vajilla y objetos cotidianos siguen en el comedor. Busca qué elemento quedó sin terminar.', caution: 'Sin más información no puedes atribuir el vaso a una persona ni afirmar qué contiene además de agua.', spots: [
+    { label: 'El fregadero', message: 'No encuentras ningún objeto que deba incorporarse al expediente.', correct: false },
+    { label: 'Los armarios', message: 'Permanecen cerrados y no presentan alteraciones relevantes.', correct: false },
+    { label: 'El servicio de mesa', message: 'Un vaso de agua quedó sin terminar. La observación queda registrada.', correct: true },
+  ] },
+  { id: 3, name: 'Pasillo', title: 'El paso entre habitaciones', description: 'El pasillo conecta las estancias durante el apagón. Examina el recorrido a ras de suelo.', caution: 'Todavía no has comprobado qué cerradura abre ni a quién pertenece.', spots: [
+    { label: 'El cuadro de la pared', message: 'Está bien sujeto y no oculta nada relevante.', correct: false },
+    { label: 'La alfombra', message: 'No conserva una marca que pueda atribuirse a la noche del crimen.', correct: false },
+    { label: 'El suelo junto al zócalo', message: 'Encuentras una pequeña llave. Su procedencia sigue sin aclarar.', correct: true },
+  ] },
+  { id: 5, name: 'Habitación de Samuel', title: 'El espacio privado de la víctima', description: 'La habitación y el antiguo almacén guardan objetos personales. Examina sin anticipar su significado.', caution: 'Antes de atribuirle un motivo a alguien, habrá que esclarecer el contenido y la procedencia del documento.', spots: [
+    { label: 'El armario', message: 'La ropa no aporta información verificable sobre los hechos.', correct: false },
+    { label: 'La mesilla', message: 'No encuentras señales de forcejeo ni un objeto relacionado con el caso.', correct: false },
+    { label: 'Los papeles del escritorio', message: 'Entre ellos aparece un documento doblado. Queda incorporado al expediente.', correct: true },
+  ] },
 ] as const;
 export const witnesses = [
   { id: 'daniel', name: 'Daniel González', profile: 'Tranquilo, observador y siempre atento.', secret: 'Vio una discusión importante.', essential: true, statement: 'Vi a Samuel discutiendo con Inés antes del apagón. No distinguí las palabras y no puedo afirmar qué ocurrió después.' },

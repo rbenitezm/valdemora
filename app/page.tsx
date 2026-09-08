@@ -33,6 +33,7 @@ export default function Home() {
   const [resetOpen, setResetOpen] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [exteriorSearch, setExteriorSearch] = useState<View | null>(null);
+  const [roomSearch, setRoomSearch] = useState<number | null>(null);
   const [roomId, setRoomId] = useState<number>(1);
   const [witnessId, setWitnessId] = useState('daniel');
   const [accused, setAccused] = useState('');
@@ -62,7 +63,7 @@ export default function Home() {
     catch { setSaveStatus('No se pudo guardar. Puedes seguir jugando en esta sesión.'); }
   }, [game, ready]);
   /* oxlint-enable react/react-compiler */
-  const navigate = (next: View) => { setView(next); setFeedback(''); setExteriorSearch(null); };
+  const navigate = (next: View) => { setView(next); setFeedback(''); setExteriorSearch(null); setRoomSearch(null); };
   const resumeView = (): View => {
     if (game.solved) return 'regalo';
     if (game.reconstruction || requiredWitnesses.every(id => game.interviews.includes(id))) return 'conclusion';
@@ -332,8 +333,12 @@ export default function Home() {
           </div>}
           {view === 'casa' && game.exterior && <div className="map-view">
             <Button variant="outline" className="quiet-action" onClick={openMap}><ArrowLeft /> Mapa de la finca</Button><div className="eyebrow exterior-heading">Recorrido interior</div><h1>Dentro de Valdemora</h1><p className="lead">Recorre las cuatro estancias y registra los objetos antes de interpretar su relación con la noche.</p>
-            <div className="house-layout"><div><Image className="house-plan" src="/assets/original/plano-casa.jpg" alt="Plano original de la casa Valdemora" width={315} height={325} /><div className="question-list" aria-label="Entradas a las estancias de la casa">{rooms.map(item => <Button key={item.id} variant={item.id === room.id ? 'default' : 'outline'} aria-label={`Entrar en ${item.name}`} aria-pressed={item.id === room.id} onClick={() => setRoomId(item.id)}>{game.found.includes(item.id) && <Check aria-hidden="true" />}Entrar: {item.name}</Button>)}</div></div>
-              <article className="brief-card"><span>{room.name}</span><h2>{room.title}</h2><p>{room.description}</p><Button className="primary-action" disabled={game.found.includes(room.id)} onClick={() => dispatch({ type: 'discover', id: room.id })}>{game.found.includes(room.id) ? 'Prueba registrada' : 'Examinar y registrar'}</Button>{game.found.includes(room.id) && <div className="interior-finding"><h3>{clues.find(clue => clue.id === room.id)?.title}</h3><p>{room.caution}</p><Button variant="outline" onClick={() => { const next = rooms.find(item => !game.found.includes(item.id)); if (next) setRoomId(next.id); else navigate('deducciones'); }}>{rooms.some(item => !game.found.includes(item.id)) ? 'Ir a una estancia pendiente' : 'Relacionar las siete pruebas'} <ArrowRight /></Button></div>}</article>
+            <div className="house-layout"><div><Image className="house-plan" src="/assets/original/plano-casa.jpg" alt="Plano original de la casa Valdemora" width={315} height={325} /><div className="question-list" aria-label="Entradas a las estancias de la casa">{rooms.map(item => <Button key={item.id} variant={item.id === room.id ? 'default' : 'outline'} aria-label={`Entrar en ${item.name}`} aria-pressed={item.id === room.id} onClick={() => { setRoomId(item.id); setRoomSearch(null); setFeedback(''); }}>{game.found.includes(item.id) && <Check aria-hidden="true" />}Entrar: {item.name}</Button>)}</div></div>
+              <article className="brief-card"><span>{room.name}</span><h2>{room.title}</h2><p>{room.description}</p>
+                {game.found.includes(room.id) && roomSearch !== room.id ? <><div className="registered-stamp"><Check /> Prueba registrada</div><Button variant="outline" className="review-inspection" onClick={() => { setRoomSearch(room.id); setFeedback('Repaso abierto. Elige un punto de la estancia.'); }}>Revisar la inspección</Button></> : roomSearch !== room.id ? <Button className="primary-action" onClick={() => { setRoomSearch(room.id); setFeedback('Inspección abierta. Elige un punto de la estancia.'); }}><Eye /> Iniciar inspección</Button> : <div className="search-area"><p>Selecciona un punto para examinar:</p><div className="question-list">{room.spots.map(spot => <Button key={spot.label} variant="outline" onClick={() => { setFeedback(spot.message); if (spot.correct) dispatch({ type: 'discover', id: room.id }); }}>{spot.label}</Button>)}</div></div>}
+                <output className="inspection-feedback">{feedback}</output>
+                {game.found.includes(room.id) && <div className="interior-finding"><h3>{clues.find(clue => clue.id === room.id)?.title}</h3><p>{room.caution}</p><Button variant="outline" onClick={() => { const next = rooms.find(item => !game.found.includes(item.id)); if (next) { setRoomId(next.id); setRoomSearch(null); setFeedback(''); } else navigate('deducciones'); }}>{rooms.some(item => !game.found.includes(item.id)) ? 'Ir a una estancia pendiente' : 'Relacionar las siete pruebas'} <ArrowRight /></Button></div>}
+              </article>
             </div>
           </div>}
           {view === 'personas' && game.interior && <div className="map-view">
