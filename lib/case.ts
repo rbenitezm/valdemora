@@ -68,6 +68,25 @@ export const cast = [
   { id: 'uno', name: 'Uno', group: 'Los animales', profile: 'Gato blanco y negro. Más tímido y reservado. Se esconde cuando se asusta. Tiene los ojos verdes.', tag: '' },
   { id: 'dos', name: 'Dos', group: 'Los animales', profile: 'Gato blanco y negro. Personalidad peculiar, se comunica con maullidos extraños y muy insistentes.', tag: '' },
 ] as const;
+// The seven envelopes of the original sheet, used as phase titles.
+export const envelopes = [
+  { n: 1, title: 'La escena', brief: 'Analizad la escena del crimen y los objetos encontrados.' },
+  { n: 2, title: 'Los horarios', brief: 'Reconstruid los primeros horarios y detectad las primeras contradicciones.' },
+  { n: 3, title: 'Los secretos', brief: 'Descubrid los secretos de cada personaje. No todos son culpables.' },
+  { n: 4, title: 'Los testigos', brief: 'Escuchad a los niños y observad a los animales. Ellos vieron cosas que los adultos no.' },
+  { n: 5, title: 'La habitación', brief: 'Explorad la habitación, el armario del pasillo y los documentos ocultos.' },
+  { n: 6, title: 'La gran contradicción', brief: 'Reunid todas las pistas y reconstruid la verdad. Haced una acusación provisional.' },
+  { n: 7, title: 'La verdad', brief: 'Comprobáis vuestra teoría y descubrís quién está detrás de todo.' },
+] as const;
+export const mainRule = 'No existe una única pista definitiva. Todas las pruebas deben encajar entre sí. Algunas pistas son falsas o mal interpretadas. Pensad, cuestionad y conectad todo.';
+// "Fotografías importantes" and the desk note, cropped from the original sheet.
+export const photos = [
+  { id: 'valdemora-antes', caption: 'Valdemora hace 11 años.', src: '/assets/fotos/valdemora-antes.jpg', width: 106, height: 94 },
+  { id: 'samuel-pasado', caption: 'Samuel y otra persona en el pasado.', src: '/assets/fotos/samuel-pasado.jpg', width: 104, height: 94 },
+  { id: 'puerta-servicio', caption: 'Puerta de servicio (desde el exterior).', src: '/assets/fotos/puerta-servicio.jpg', width: 104, height: 95 },
+  { id: 'acceso-antiguo', caption: 'Acceso antiguo (tras la puerta).', src: '/assets/fotos/acceso-antiguo.jpg', width: 106, height: 93 },
+] as const;
+export const deskNote = { title: 'Nota encontrada en el escritorio de Samuel.', text: 'Uno de vosotros miente desde antes de llegar. Pero no todos los que mienten son culpables.', src: '/assets/fotos/nota-escritorio.jpg', width: 262, height: 214 };
 // Confrontation of Inés's statement with evidence already in the file. Her replies are an adaptation:
 // she admits the argument and its subject (the original resolution) but never confesses, and the exterior route still identifies nobody.
 export const confrontations = [

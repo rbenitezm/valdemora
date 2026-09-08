@@ -353,3 +353,16 @@ h1 { margin: 12px 0 16px; font-weight: 400; font-size: clamp(2.2rem, 5vw, 4.7rem
 .cast-card small { display: block; margin-top: 4px; color: var(--muted-foreground); font: .8rem/1.5 ui-sans-serif, system-ui, sans-serif; }
 .cast-card em { display: block; margin-top: 6px; color: #d6b779; font: italic .75rem/1.4 ui-sans-serif, system-ui, sans-serif; }
 .cast-source { margin: 16px 18px 18px; color: #766d5d; font: .72rem/1.5 ui-sans-serif, system-ui, sans-serif; }
+
+/* Envelopes, main rule, photographs and the desk note from the original sheet. */
+.envelope-brief { margin: 6px 0 12px; color: #a3987f; font-style: italic; font-size: .95rem; line-height: 1.5; }
+.rule-card { grid-column: 1 / -1; min-height: 0; }
+.rule-card p { margin: 12px 0 10px; font-size: 1.05rem; line-height: 1.65; }
+.rule-card small { color: #b99254; font: 600 .68rem/1.2 ui-sans-serif, system-ui, sans-serif; letter-spacing: .18em; text-transform: uppercase; }
+.photo-strip { display: flex; flex-wrap: wrap; gap: 18px; }
+.photo-strip .clue-photo { margin-top: 12px; }
+.cast-photos { padding: 0 18px; }
+.desk-note { margin-top: 22px; padding-top: 18px; border-top: 1px dashed rgb(196 154 87 / 30%); }
+.desk-note .clue-photo img { width: min(100%, 300px); }
+.desk-note .testimony { font-size: 1.05rem; text-transform: uppercase; letter-spacing: .04em; }
+.desk-note small { display: block; margin-top: 12px; color: var(--muted-foreground); font: .8rem/1.5 ui-sans-serif, system-ui, sans-serif; }
