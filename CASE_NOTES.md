@@ -16,9 +16,13 @@ Las tres respuestas de Hugo y la pregunta de deducción son texto nuevo. Se limi
 
 ## Alcance jugable
 
-Introducción → mapa → fotografía del bosque → deducción → tres preguntas a Hugo → registrar testimonio → acceso lateral y establos → humedad y pieza metálica → hipótesis del recorrido exterior → cuatro estancias de la casa → siete pruebas → deducción temporal del reloj. Los testimonios de sospechosos, reconstrucción y acusación siguen pendientes. El final del recorrido lo indica explícitamente.
+Introducción → mapa → fotografía del bosque → deducción → tres preguntas a Hugo → registrar testimonio → acceso lateral y establos → humedad y pieza metálica → hipótesis del recorrido exterior → cuatro estancias de la casa → siete pruebas → deducción temporal del reloj → declaraciones → reconstrucción → acusación final.
 
 Las descripciones de las estancias son adaptación de los nombres de pistas originales. No se inventa el contenido del documento, la cerradura de la llave ni un análisis del vaso. La deducción temporal sólo establece que las 00:06 caen dentro del apagón, no que sea la hora de la muerte. Las pruebas de la casa requieren completar el exterior; su deducción requiere las siete pruebas. El porcentaje de la interfaz representa pruebas reunidas, no un caso resuelto.
+
+Los perfiles, secretos y papel de Daniel, Karalee, María Gómez, Inés, Verónica, Javier, María Alejandra, Jhonatan y Jairo proceden de la ficha gráfica original. El texto exacto de sus declaraciones es adaptación. Para sostener la resolución original, la adaptación especifica que Daniel vio discutir a Samuel con Inés, que Karalee sólo distinguió una silueta hacia la zona de servicio y que Inés niega haber usado el acceso lateral. La declaración de María no atribuye destinatario al mensaje. Sólo las cuatro declaraciones clave desbloquean la reconstrucción; las demás explican mentiras sin asociarlas automáticamente a la muerte.
+
+La reconstrucción reproduce la resolución del prototipo original: cita por documentos relativos a Valdemora, discusión, caída fatal y salida de Inés sin pedir ayuda. La acusación requiere elegir a Inés, la caída durante la discusión y la huida por la puerta lateral. Una respuesta incorrecta conserva la partida y permite revisar el expediente.
 
 La segunda deducción es una adaptación: trata el recorrido exterior como hipótesis compatible con las pruebas. No inventa un encaje físico de la pieza en la puerta, una hora para la humedad ni una identificación. Las partidas anteriores se conservan; las zonas exteriores requieren el testimonio registrado y la segunda deducción exige ambas nuevas pruebas.
 

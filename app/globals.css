@@ -198,8 +198,27 @@ h1 { margin: 12px 0 16px; font-weight: 400; font-size: clamp(2.2rem, 5vw, 4.7rem
 .evidence-register > div { padding-bottom: 12px; border-bottom: 1px solid var(--border); }
 .evidence-register span, .evidence-register strong { display: block; line-height: 1.6; }
 .evidence-register span { font-size: .875rem; color: var(--muted-foreground); }
-@media (max-width: 900px) { .house-layout { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .house-layout, .interview-layout { grid-template-columns: 1fr; } }
 .deduction-card output { display: block; margin-top: 16px; line-height: 1.6; }
+.character-board { width: 100%; height: auto; max-height: 520px; object-fit: cover; object-position: top; border: 1px solid var(--border); margin-bottom: 24px; }
+.interview-layout { display: grid; grid-template-columns: minmax(230px, .65fr) minmax(0, 1.35fr); gap: 18px; align-items: start; }
+.witness-list { border: 1px solid var(--border); background: rgb(14 15 12 / 80%); padding: 8px 14px; }
+.witness-list button { width: 100%; display: grid; grid-template-columns: 24px 1fr; gap: 10px; border: 0; border-bottom: 1px solid var(--border); background: transparent; color: var(--foreground); padding: 13px 5px; text-align: left; cursor: pointer; }
+.witness-list button:last-child { border-bottom: 0; }
+.witness-list button.active { color: #f4d99e; background: linear-gradient(90deg, rgb(196 154 87 / 12%), transparent); }
+.witness-list button > span { color: var(--primary); font-family: ui-sans-serif, system-ui, sans-serif; }
+.witness-list button div { display: grid; gap: 4px; }
+.witness-list small, .witness-card > small { color: var(--muted-foreground); font: .75rem/1.5 ui-sans-serif, system-ui, sans-serif; }
+.witness-card h3 { margin-top: 30px; color: #d6b779; font-weight: 400; }
+.interview-progress { margin-top: 18px; min-height: 0; }
+.reconstruction ol { padding-left: 22px; line-height: 1.75; color: #c7bda8; }
+.accusation { margin-top: 18px; }
+.accusation fieldset { border: 0; border-top: 1px solid var(--border); margin: 22px 0 0; padding: 20px 0 0; }
+.accusation legend { color: #d8c7a6; font-size: 1.1rem; }
+.accusation label { display: flex; gap: 12px; align-items: center; padding: 8px 0; color: #b9af9c; cursor: pointer; }
+.case-solved { margin-top: 20px; padding: clamp(28px, 6vw, 64px); border: 1px solid #8aa76d; background: radial-gradient(circle at top right, rgb(138 167 109 / 18%), transparent 45%), #11120f; }
+.case-solved > span { color: #a9bd91; font: .75rem/1 ui-sans-serif, system-ui, sans-serif; letter-spacing: .16em; text-transform: uppercase; }
+.case-solved h2 { font-size: clamp(2rem, 5vw, 4rem); font-weight: 400; margin: 14px 0; }
 .timeline-list { padding: 0; list-style: none; }
 .timeline-list li { display: grid; grid-template-columns: 80px 1fr; padding: 20px 0; border-bottom: 1px solid var(--border); gap: 14px; line-height: 1.6; }
 .timeline-list time { color: var(--primary); }
@@ -207,4 +226,4 @@ h1 { margin: 12px 0 16px; font-weight: 400; font-size: clamp(2.2rem, 5vw, 4.7rem
 .brief-card p, .empty-finding p { font-size: 1rem; }
 .case-status, .case-mark strong, .eyebrow, .panel-kicker, .finding-number, .scene-copy span, .field-title small { font-size: .75rem; }
 .primary-action, .locations-panel small, .case-progress small, .finding-card small, .evidence-hotspot span { font-size: .875rem; }
-@media (max-width: 620px) { .save-bar { padding: 8px 12px; font-size: .75rem; flex-wrap: wrap; } .case-status { font-size: 0; } .case-nav > button { flex-direction: column; gap: 3px; font-size: .75rem; } }
+@media (max-width: 620px) { .save-bar { padding: 8px 12px; font-size: .75rem; flex-wrap: wrap; } .case-status { font-size: 0; } .case-nav { overflow-x: auto; justify-content: flex-start; } .case-nav > button { flex: 0 0 62px; flex-direction: column; gap: 3px; font-size: .7rem; } .character-board { max-height: 300px; } }

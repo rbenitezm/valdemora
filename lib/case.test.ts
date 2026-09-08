@@ -1,6 +1,21 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { advance, initialState, restore, questions } from './case.ts';
+import { advance, initialState, restore, questions, requiredWitnesses, type GameState } from './case.ts';
+
+void test('key interviews gate reconstruction and the final resolution', () => {
+  const completeInterior: GameState = { version: 1, found: [1, 2, 3, 4, 5, 6, 7], deduction: true, answers: ['sound', 'sight', 'photo'], testimony: true, exterior: true, interior: true, interviews: [], reconstruction: false, solved: false };
+  assert.deepEqual(advance(completeInterior, { type: 'reconstruct' }), completeInterior);
+  let state = completeInterior;
+  for (const id of requiredWitnesses.slice(0, -1)) state = advance(state, { type: 'interview', id });
+  assert.equal(advance(state, { type: 'reconstruct' }).reconstruction, false);
+  state = advance(state, { type: 'interview', id: requiredWitnesses.at(-1)! });
+  state = advance(state, { type: 'reconstruct' });
+  assert.equal(state.reconstruction, true);
+  state = advance(state, { type: 'solve' });
+  assert.equal(state.solved, true);
+  assert.deepEqual(restore(JSON.stringify(state)), state);
+  assert.equal(restore(JSON.stringify({ ...state, reconstruction: false })).solved, false);
+});
 
 void test('interior unlocks after exterior and survives reload with all seven clues', () => {
   assert.deepEqual(advance(initialState, { type: 'discover', id: 1 }), initialState);

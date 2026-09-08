@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { advance, initialState, restore, clues, timeline, questions, rooms, type Action } from '@/lib/case';
+import { advance, initialState, restore, clues, timeline, questions, rooms, witnesses, requiredWitnesses, type Action } from '@/lib/case';
 import { AlertDialog, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogCancel, AlertDialogAction, AlertDialogFooter } from '@/components/ui/alert-dialog';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import Image from 'next/image';
 import {
   ArrowLeft,
@@ -15,11 +16,13 @@ import {
   Map,
   MapPin,
   Search,
+  Users,
+  Gavel,
 } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 
-type View = 'intro' | 'finca' | 'bosque' | 'deducciones' | 'hugo' | 'cronologia' | 'acceso' | 'establos' | 'casa';
+type View = 'intro' | 'finca' | 'bosque' | 'deducciones' | 'hugo' | 'cronologia' | 'acceso' | 'establos' | 'casa' | 'personas' | 'conclusion';
 
 export default function Home() {
   const [view, setView] = useState<View>('intro');
@@ -29,7 +32,12 @@ export default function Home() {
   const [resetOpen, setResetOpen] = useState(false);
   const [feedback, setFeedback] = useState('');
   const [roomId, setRoomId] = useState<number>(1);
+  const [witnessId, setWitnessId] = useState('daniel');
+  const [accused, setAccused] = useState('');
+  const [eventTheory, setEventTheory] = useState('');
+  const [exitTheory, setExitTheory] = useState('');
   const room = rooms.find(item => item.id === roomId) ?? rooms[0];
+  const witness = witnesses.find(item => item.id === witnessId) ?? witnesses[0];
   const observationFound = game.found.includes(4);
   const progress = Math.round(game.found.length / 7 * 100);
   const locations: { name: string; detail: string; active: boolean; view: View }[] = [
@@ -71,7 +79,7 @@ export default function Home() {
 
         <div className="case-status" aria-live="polite">
           <span className="status-dot" />
-          Investigación abierta
+          {game.solved ? 'Caso resuelto' : 'Investigación abierta'}
           <b>{game.found.length} / 7 pruebas</b>
         </div>
       </header>
@@ -97,6 +105,12 @@ export default function Home() {
           </button>
           <button aria-label="Interrogar a Hugo" disabled={!game.deduction} className={view === 'hugo' ? 'active' : ''} onClick={() => navigate('hugo')}>
             <FileText aria-hidden="true" /> Hugo
+          </button>
+          <button aria-label="Personas del caso" disabled={!game.interior} className={view === 'personas' ? 'active' : ''} onClick={() => navigate('personas')}>
+            <Users aria-hidden="true" /> Personas
+          </button>
+          <button aria-label="Reconstrucción y acusación" disabled={!requiredWitnesses.every(id => game.interviews.includes(id))} className={view === 'conclusion' ? 'active' : ''} onClick={() => navigate('conclusion')}>
+            <Gavel aria-hidden="true" /> Conclusión
           </button>
 
           <div className="case-progress">
@@ -289,6 +303,30 @@ export default function Home() {
             <div className="house-layout"><div><Image className="house-plan" src="/assets/original/plano-casa.jpg" alt="Plano original de la casa Valdemora" width={315} height={325} /><div className="question-list" aria-label="Estancias de la casa">{rooms.map(item => <Button key={item.id} variant={item.id === room.id ? 'default' : 'outline'} aria-pressed={item.id === room.id} onClick={() => setRoomId(item.id)}>{game.found.includes(item.id) && <Check aria-hidden="true" />}{item.name}</Button>)}</div></div>
               <article className="brief-card"><span>{room.name}</span><h2>{room.title}</h2><p>{room.description}</p><Button className="primary-action" disabled={game.found.includes(room.id)} onClick={() => dispatch({ type: 'discover', id: room.id })}>{game.found.includes(room.id) ? 'Prueba registrada' : 'Examinar y registrar'}</Button>{game.found.includes(room.id) && <div className="interior-finding"><h3>{clues.find(clue => clue.id === room.id)?.title}</h3><p>{room.caution}</p><Button variant="outline" onClick={() => { const next = rooms.find(item => !game.found.includes(item.id)); if (next) setRoomId(next.id); else navigate('deducciones'); }}>{rooms.some(item => !game.found.includes(item.id)) ? 'Ir a una estancia pendiente' : 'Relacionar las siete pruebas'} <ArrowRight /></Button></div>}</article>
             </div>
+          </div>}
+          {view === 'personas' && game.interior && <div className="map-view">
+            <div className="eyebrow">Fase 04 · Testimonios</div><h1>Todos ocultan algo</h1><p className="lead">Un secreto puede explicar una mentira sin convertirla en asesinato. Registra las cuatro declaraciones clave para reconstruir la noche; las demás amplían el expediente.</p>
+            <Image className="character-board" src="/assets/original/personajes.jpg" alt="Fichas originales de personajes del caso Valdemora" width={1536} height={1024} sizes="(max-width: 900px) 100vw, 70vw" />
+            <div className="interview-layout"><div className="witness-list" aria-label="Personas disponibles">{witnesses.map(item => <button key={item.id} className={item.id === witness.id ? 'active' : ''} onClick={() => setWitnessId(item.id)}><span>{game.interviews.includes(item.id) ? '✓' : item.essential ? '!' : '·'}</span><div><strong>{item.name}</strong><small>{item.essential ? 'Declaración clave' : 'Declaración adicional'}</small></div></button>)}</div>
+              <article className="brief-card witness-card"><span>Entrevista · {witness.name}</span><h2>{witness.profile}</h2><p>Pregunta por aquello que no contó al comenzar la investigación.</p>{game.interviews.includes(witness.id) ? <><h3>{witness.secret}</h3><blockquote className="testimony">«{witness.statement}»</blockquote><small>Declaración adaptada a partir de la ficha original.</small></> : <Button className="primary-action" onClick={() => dispatch({ type: 'interview', id: witness.id })}>Registrar declaración</Button>}</article>
+            </div>
+            <article className="brief-card interview-progress"><span>Declaraciones clave</span><h2>{requiredWitnesses.filter(id => game.interviews.includes(id)).length} / {requiredWitnesses.length}</h2>{requiredWitnesses.every(id => game.interviews.includes(id)) ? <><p>Ya puedes ordenar los hechos sin confundir los secretos personales con la responsabilidad por la muerte.</p><Button onClick={() => navigate('conclusion')}>Reconstruir la noche <ArrowRight /></Button></> : <p>Busca las fichas marcadas con un signo de exclamación.</p>}</article>
+          </div>}
+          {view === 'conclusion' && game.interior && requiredWitnesses.every(id => game.interviews.includes(id)) && <div className="map-view">
+            <div className="eyebrow">Fases 06 y 07 · La verdad</div><h1>Reconstrucción del caso</h1><p className="lead">Ordena únicamente lo que encaja con las siete pruebas, los horarios y las declaraciones.</p>
+            {!game.reconstruction ? <article className="brief-card deduction-card"><h2>¿Qué relato explica mejor el conjunto?</h2><div className="question-list">
+              <Button variant="outline" onClick={() => setFeedback('La hora del reloj no basta para demostrar un plan previo, y varias mentiras tienen motivos personales.')}>Javier planeó la muerte y preparó el apagón para ocultarla.</Button>
+              <Button variant="outline" onClick={() => { dispatch({ type: 'reconstruct' }); setFeedback('Reconstrucción coherente. Ya puedes formular una acusación completa.'); }}>Samuel citó a alguien por los documentos; hubo una discusión y una caída, seguida de una huida por el acceso lateral.</Button>
+              <Button variant="outline" onClick={() => setFeedback('La pieza metálica y la puerta justifican investigar un recorrido, pero no prueban que un intruso desconocido matara a Samuel.')}>Un intruso entró desde los establos y atacó a Samuel a las 00:06.</Button>
+            </div><output>{feedback}</output></article> : <>
+              <article className="brief-card reconstruction"><span>Relato compatible con las pruebas</span><h2>Una discusión, una caída y una decisión</h2><ol><li>Samuel había citado a Inés para hablar de documentos relacionados con Valdemora.</li><li>La conversación se volvió tensa y, durante un forcejeo, Samuel cayó y se golpeó la cabeza.</li><li>El apagón impidió que los demás vieran con claridad lo ocurrido.</li><li>Inés no pidió ayuda y abandonó el lugar por la puerta lateral.</li></ol><p>Esta reconstrucción conserva la resolución del prototipo original. La acusación debe identificar tanto la responsabilidad como la conducta posterior.</p></article>
+              {!game.solved ? <article className="brief-card accusation"><span>Acusación final</span><h2>Presenta una teoría completa</h2>
+                <fieldset><legend>¿A quién acusas?</legend><RadioGroup value={accused} onValueChange={value => setAccused(String(value))}>{[['ines','Inés Robles'],['javier','Javier López'],['veronica','Verónica Benítez'],['maria','María Gómez']].map(([value,label]) => <label key={value}><RadioGroupItem value={value} />{label}</label>)}</RadioGroup></fieldset>
+                <fieldset><legend>¿Qué ocurrió?</legend><RadioGroup value={eventTheory} onValueChange={value => setEventTheory(String(value))}>{[['fall','Una discusión terminó en una caída fatal.'],['attack','Fue un ataque premeditado durante el apagón.'],['accident','Samuel sufrió un accidente estando solo.']].map(([value,label]) => <label key={value}><RadioGroupItem value={value} />{label}</label>)}</RadioGroup></fieldset>
+                <fieldset><legend>¿Qué hizo después?</legend><RadioGroup value={exitTheory} onValueChange={value => setExitTheory(String(value))}>{[['side','Se marchó por la puerta lateral sin pedir ayuda.'],['stable','Ocultó las pruebas en los establos.'],['stay','Permaneció con el grupo hasta las 00:17.']].map(([value,label]) => <label key={value}><RadioGroupItem value={value} />{label}</label>)}</RadioGroup></fieldset>
+                <Button className="primary-action" onClick={() => { if (!accused || !eventTheory || !exitTheory) setFeedback('Completa las tres partes de la acusación.'); else if (accused === 'ines' && eventTheory === 'fall' && exitTheory === 'side') { dispatch({ type: 'solve' }); setFeedback('Acusación correcta.'); } else setFeedback('La teoría no encaja con todo el expediente. Revisa quién discutió con Samuel, la naturaleza de la caída y el acceso lateral.'); }}>Confirmar acusación</Button><output>{feedback}</output>
+              </article> : <article className="case-solved"><span>Caso 001 · Cerrado</span><h2>Acusación correcta</h2><p>Has distinguido las mentiras personales de los hechos relevantes y has explicado las siete pruebas sin atribuirles más de lo que demuestran.</p><Button onClick={() => navigate('cronologia')}>Revisar el expediente final</Button></article>}
+            </>}
           </div>}
           {(view === 'acceso' || view === 'establos') && game.testimony && <div className="map-view">
             <Button variant="outline" className="quiet-action" onClick={openMap}><ArrowLeft /> Mapa de la finca</Button>

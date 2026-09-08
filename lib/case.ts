@@ -26,9 +26,21 @@ export const rooms = [
   { id: 3, name: 'Pasillo', title: 'Una llave pequeña', description: 'Encuentras una pequeña llave en el pasillo. Regístrala entre los objetos de la investigación.', caution: 'Todavía no has comprobado qué cerradura abre ni a quién pertenece.' },
   { id: 5, name: 'Habitación de Samuel', title: 'El documento doblado', description: 'Un documento doblado merece quedar registrado. Su relación con Samuel abre una nueva línea de investigación.', caution: 'Antes de atribuirle un motivo a alguien, habrá que esclarecer el contenido y la procedencia del documento.' },
 ] as const;
-export type GameState = { version: 1; found: number[]; deduction: boolean; answers: string[]; testimony: boolean; exterior: boolean; interior: boolean };
-export const initialState: GameState = { version: 1, found: [], deduction: false, answers: [], testimony: false, exterior: false, interior: false };
-export type Action = { type: 'discover'; id?: 1 | 2 | 3 | 4 | 5 | 6 | 7 } | { type: 'deduce' } | { type: 'answer'; id: string } | { type: 'testimony' } | { type: 'exterior' } | { type: 'interior' };
+export const witnesses = [
+  { id: 'daniel', name: 'Daniel González', profile: 'Tranquilo, observador y siempre atento.', secret: 'Vio una discusión importante.', essential: true, statement: 'Vi a Samuel discutiendo con Inés antes del apagón. No distinguí las palabras y no puedo afirmar qué ocurrió después.' },
+  { id: 'karalee', name: 'Karalee Rhuman', profile: 'Entiende español, pero no lo habla con soltura.', secret: 'Vio a alguien durante el apagón.', essential: true, statement: 'Durante el apagón vi una silueta dirigirse hacia la zona de servicio. Con aquella oscuridad no pude reconocer a la persona.' },
+  { id: 'maria', name: 'María Gómez', profile: 'Muy protectora con sus hijos.', secret: 'Recibió un mensaje de Samuel.', essential: true, statement: 'Samuel me escribió antes de desaparecer. Quería hablar sobre Valdemora y me pidió que cuidara de los niños. No mencionó a quién esperaba.' },
+  { id: 'ines', name: 'Inés Robles', profile: 'Vecina de la zona. Escuchó algo durante la noche.', secret: 'Asegura que sólo oyó la discusión.', essential: true, statement: 'Oí voces, pero no entré en la casa. Me marché antes del apagón y no utilicé ninguna puerta lateral.' },
+  { id: 'veronica', name: 'Verónica Benítez', profile: 'Muy nerviosa y curiosa.', secret: 'Samuel sabía algo que ella ocultaba.', essential: false, statement: 'Samuel conocía un asunto privado mío. Lo oculté por miedo a que me juzgaran, pero no estaba relacionado con Valdemora.' },
+  { id: 'javier', name: 'Javier López', profile: 'Analiza cada situación.', secret: 'Samuel lo amenazó con revelar algo.', essential: false, statement: 'Samuel amenazó con revelar un error que cometí. Mentí para protegerme, pero no estuve en su habitación durante el apagón.' },
+  { id: 'alejandra', name: 'María Alejandra de Anta Armas', profile: 'Sociable, expresiva y espontánea.', secret: 'Entró en un lugar donde no debía.', essential: false, statement: 'Entré en una habitación sin permiso antes de cenar. Me avergonzaba admitirlo; no vi los documentos de Samuel.' },
+  { id: 'jhonatan', name: 'Jhonatan Vaca', profile: 'Bombero con experiencia en emergencias.', secret: 'Dejó una puerta entreabierta.', essential: false, statement: 'Dejé una puerta entreabierta al salir. Lo oculté porque parecía irresponsable, pero fue antes de que empezara el apagón.' },
+  { id: 'jairo', name: 'Jairo Varela', profile: 'Tranquilo, lee y observa con paciencia.', secret: 'Se separó de Daniel durante unos minutos.', essential: false, statement: 'Me separé de Daniel unos minutos. Estaba solo y por eso no tengo quién confirme mi recorrido.' },
+] as const;
+export const requiredWitnesses = witnesses.filter(witness => witness.essential).map(witness => witness.id);
+export type GameState = { version: 1; found: number[]; deduction: boolean; answers: string[]; testimony: boolean; exterior: boolean; interior: boolean; interviews: string[]; reconstruction: boolean; solved: boolean };
+export const initialState: GameState = { version: 1, found: [], deduction: false, answers: [], testimony: false, exterior: false, interior: false, interviews: [], reconstruction: false, solved: false };
+export type Action = { type: 'discover'; id?: 1 | 2 | 3 | 4 | 5 | 6 | 7 } | { type: 'deduce' } | { type: 'answer'; id: string } | { type: 'testimony' } | { type: 'exterior' } | { type: 'interior' } | { type: 'interview'; id: string } | { type: 'reconstruct' } | { type: 'solve' };
 export function advance(state: GameState, action: Action): GameState {
   if (action.type === 'discover') {
     const id = action.id ?? 4;
@@ -38,6 +50,9 @@ export function advance(state: GameState, action: Action): GameState {
   }
   if (action.type === 'exterior' && state.testimony && [4, 6, 7].every(id => state.found.includes(id))) return { ...state, exterior: true };
   if (action.type === 'interior' && state.exterior && clues.every(clue => state.found.includes(clue.id))) return { ...state, interior: true };
+  if (action.type === 'interview' && state.interior && witnesses.some(witness => witness.id === action.id)) return { ...state, interviews: [...new Set([...state.interviews, action.id])] };
+  if (action.type === 'reconstruct' && state.interior && requiredWitnesses.every(id => state.interviews.includes(id))) return { ...state, reconstruction: true };
+  if (action.type === 'solve' && state.reconstruction) return { ...state, solved: true };
   if (action.type === 'deduce' && state.found.includes(4)) return { ...state, deduction: true };
   if (action.type === 'answer' && state.deduction && questions.some(q => q.id === action.id)) return { ...state, answers: [...new Set([...state.answers, action.id])] };
   if (action.type === 'testimony' && questions.every(q => state.answers.includes(q.id))) return { ...state, testimony: true };
@@ -55,6 +70,9 @@ export function restore(raw: string | null): GameState {
     const exterior = testimony && found.length === 3 && value.exterior === true;
     if (exterior) for (const id of [1, 2, 3, 5]) if (value.found.includes(id)) found.push(id);
     found.sort((a, b) => a - b);
-    return { version: 1, found, deduction, answers, testimony, exterior, interior: exterior && found.length === 7 && value.interior === true };
+    const interior = exterior && found.length === 7 && value.interior === true;
+    const interviews = interior && Array.isArray(value.interviews) ? witnesses.filter(witness => value.interviews.includes(witness.id)).map(witness => witness.id) : [];
+    const reconstruction = interior && requiredWitnesses.every(id => interviews.includes(id)) && value.reconstruction === true;
+    return { version: 1, found, deduction, answers, testimony, exterior, interior, interviews, reconstruction, solved: reconstruction && value.solved === true };
   } catch { return initialState; }
 }
